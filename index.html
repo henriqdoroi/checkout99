@@ -2,1251 +2,212 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f6f6f7" />
   <title>Transferência Pix</title>
-
-  <!-- QR Code -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-  <style>
-    /*
-      Se você tiver a fonte DiDi Sans licenciada, descomente e coloque os arquivos em /fonts
-
-      @font-face {
-        font-family: "DiDi Sans";
-        src: url("./fonts/DiDiSans-Regular.woff2") format("woff2");
-        font-weight: 400;
-        font-style: normal;
-      }
-
-      @font-face {
-        font-family: "DiDi Sans";
-        src: url("./fonts/DiDiSans-Medium.woff2") format("woff2");
-        font-weight: 500;
-        font-style: normal;
-      }
-
-      @font-face {
-        font-family: "DiDi Sans";
-        src: url("./fonts/DiDiSans-Bold.woff2") format("woff2");
-        font-weight: 700 900;
-        font-style: normal;
-      }
-    */
-
-    :root {
-      --bg: #f5f5f6;
-      --surface: #ffffff;
-      --surface-soft: #efeff1;
-      --surface-soft-2: #f8f8f9;
-      --text: #111111;
-      --muted: #8d8d94;
-      --muted-2: #a8a8af;
-      --line: #ececef;
-      --yellow: #ffd800;
-      --yellow-2: #f6d000;
-      --orange: #f28c18;
-      --green: #18c77a;
-      --shadow: 0 4px 16px rgba(17, 17, 17, 0.04);
-      --radius-xs: 12px;
-      --radius-sm: 16px;
-      --radius-md: 20px;
-      --radius-lg: 24px;
-      --radius-xl: 28px;
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-    }
-
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: "DiDi Sans", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Arial, sans-serif;
-    }
-
-    body {
-      min-height: 100dvh;
-      overflow-x: hidden;
-    }
-
-    .app {
-      width: 100%;
-      max-width: 430px;
-      min-height: 100dvh;
-      margin: 0 auto;
-      background: var(--bg);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .screen {
-      min-height: 100dvh;
-      display: none;
-      padding: calc(14px + var(--safe-top)) 18px calc(24px + var(--safe-bottom));
-      animation: fadeUp .28s ease;
-    }
-
-    .screen.active {
-      display: block;
-    }
-
-    @keyframes fadeUp {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .topbar {
-      height: 52px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      margin-bottom: 20px;
-    }
-
-    .back-btn {
-      position: absolute;
-      left: 0;
-      width: 38px;
-      height: 38px;
-      border: 0;
-      border-radius: 999px;
-      background: transparent;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      padding: 0;
-    }
-
-    .back-btn svg {
-      width: 24px;
-      height: 24px;
-      stroke: #111;
-      stroke-width: 2.35;
-      fill: none;
-    }
-
-    .topbar-title {
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: -0.3px;
-    }
-
-    .checkout-hero {
-      margin-top: 8px;
-      margin-bottom: 24px;
-    }
-
-    .checkout-hero h1 {
-      font-size: 31px;
-      line-height: 1.06;
-      margin: 0 0 12px;
-      font-weight: 900;
-      letter-spacing: -1px;
-      max-width: 290px;
-    }
-
-    .checkout-hero p {
-      margin: 0;
-      font-size: 17px;
-      line-height: 1.38;
-      color: #2a2a2f;
-      letter-spacing: -0.1px;
-      max-width: 345px;
-    }
-
-    .data-sheet {
-      margin-top: 20px;
-      background: transparent;
-      border-top: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
-    }
-
-    .field-row {
-      padding: 18px 0 16px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .field-row:last-child {
-      border-bottom: 0;
-    }
-
-    .field-label {
-      display: block;
-      font-size: 14px;
-      font-weight: 600;
-      color: #6f6f76;
-      margin-bottom: 10px;
-      letter-spacing: -0.1px;
-    }
-
-    .field-input-wrap {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .field-input {
-      width: 100%;
-      border: 0;
-      background: transparent;
-      outline: none;
-      color: var(--text);
-      font-size: 18px;
-      font-weight: 500;
-      letter-spacing: -0.25px;
-      padding: 0;
-      min-height: 30px;
-    }
-
-    .field-input::placeholder {
-      color: #bebec5;
-      font-weight: 500;
-    }
-
-    .country-chip {
-      flex-shrink: 0;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 10px 12px;
-      border-radius: 14px;
-      background: #ffffff;
-      border: 1px solid #ebebee;
-      box-shadow: var(--shadow);
-      font-size: 14px;
-      font-weight: 700;
-      color: #222;
-    }
-
-    .quick-summary {
-      margin-top: 28px;
-    }
-
-    .quick-summary-title {
-      font-size: 15px;
-      font-weight: 800;
-      margin: 0 0 12px;
-      letter-spacing: -0.2px;
-    }
-
-    .summary-card {
-      background: linear-gradient(180deg, #ffffff 0%, #fcfcfc 100%);
-      border: 1px solid #efeff2;
-      border-radius: 22px;
-      padding: 16px 16px;
-      box-shadow: var(--shadow);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .summary-card-left {
-      min-width: 0;
-    }
-
-    .summary-card-title {
-      font-size: 16px;
-      font-weight: 800;
-      margin: 0 0 5px;
-      letter-spacing: -0.2px;
-    }
-
-    .summary-card-subtitle {
-      font-size: 13px;
-      color: var(--muted);
-      margin: 0;
-    }
-
-    .summary-card-price {
-      font-size: 18px;
-      font-weight: 900;
-      letter-spacing: -0.4px;
-      white-space: nowrap;
-    }
-
-    .sticky-bottom {
-      position: sticky;
-      bottom: 0;
-      padding-top: 32px;
-      margin-top: 38px;
-      background: linear-gradient(180deg, rgba(245,245,246,0) 0%, rgba(245,245,246,0.92) 22%, rgba(245,245,246,1) 100%);
-    }
-
-    .continue-btn {
-      width: 100%;
-      height: 62px;
-      border: 0;
-      border-radius: 22px;
-      font-size: 17px;
-      font-weight: 900;
-      letter-spacing: -0.2px;
-      cursor: pointer;
-      transition: .22s ease;
-    }
-
-    .continue-btn.disabled {
-      background: #ececee;
-      color: #c5c5cb;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    .continue-btn.enabled {
-      background: var(--yellow);
-      color: #111;
-      box-shadow: 0 10px 20px rgba(255, 216, 0, 0.18);
-    }
-
-    .security-note {
-      text-align: center;
-      margin-top: 14px;
-      font-size: 12px;
-      color: #8e8e95;
-      line-height: 1.45;
-      padding: 0 10px;
-    }
-
-    /* PIX SCREEN */
-    .pix-hero {
-      text-align: center;
-      padding-top: 4px;
-      margin-bottom: 18px;
-    }
-
-    .pix-hero-illustration {
-      width: 168px;
-      height: 168px;
-      display: block;
-      margin: 10px auto 12px;
-      filter: drop-shadow(0 2px 8px rgba(17,17,17,.04));
-    }
-
-    .pix-status {
-      font-size: 22px;
-      font-weight: 500;
-      letter-spacing: -0.45px;
-      margin: 0 0 10px;
-    }
-
-    .pix-value {
-      margin: 0;
-      font-size: 38px;
-      line-height: 1.05;
-      font-weight: 900;
-      letter-spacing: -1px;
-    }
-
-    .soft-card {
-      background: var(--surface-soft);
-      border-radius: 24px;
-      padding: 18px 16px;
-      margin-top: 14px;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.36);
-    }
-
-    .soft-card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .soft-card-header.no-gap {
-      margin-bottom: 0;
-    }
-
-    .soft-card-title-wrap {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-    }
-
-    .soft-card-title {
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: -0.35px;
-      line-height: 1.15;
-    }
-
-    .soft-card-action {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      border: 0;
-      background: transparent;
-      color: #111;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      padding: 0;
-      flex-shrink: 0;
-    }
-
-    .soft-card-action svg {
-      width: 16px;
-      height: 16px;
-      stroke: #111;
-      stroke-width: 2.2;
-      fill: none;
-    }
-
-    .mini-round {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: rgba(255, 216, 0, 0.26);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .mini-round .yellow-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--yellow);
-    }
-
-    .mini-round svg {
-      width: 18px;
-      height: 18px;
-      stroke: #151515;
-      stroke-width: 2.1;
-      fill: none;
-    }
-
-    .countdown {
-      font-size: 18px;
-      font-weight: 600;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: -0.2px;
-      white-space: nowrap;
-    }
-
-    .progress {
-      width: 100%;
-      height: 7px;
-      border-radius: 999px;
-      background: #d8d8dd;
-      overflow: hidden;
-    }
-
-    .progress-bar {
-      width: 100%;
-      height: 100%;
-      background: var(--yellow-2);
-      border-radius: 999px;
-      transition: width .35s linear;
-    }
-
-    .helper-text {
-      margin: 0 0 14px;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.25;
-      letter-spacing: -0.05px;
-    }
-
-    .pix-code-box {
-      min-height: 64px;
-      background: #ffffff;
-      border-radius: 18px;
-      padding: 0 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      box-shadow: inset 0 0 0 1px rgba(17, 17, 17, 0.02);
-    }
-
-    .pix-code-text {
-      flex: 1;
-      min-width: 0;
-      font-size: 15px;
-      color: #171717;
-      letter-spacing: -0.1px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .icon-copy-btn {
-      width: 42px;
-      height: 42px;
-      border: 0;
-      border-radius: 12px;
-      background: transparent;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      padding: 0;
-      flex-shrink: 0;
-    }
-
-    .icon-copy-btn svg {
-      width: 28px;
-      height: 28px;
-      stroke: #111;
-      stroke-width: 2.3;
-      fill: none;
-    }
-
-    .dotted-divider {
-      height: 10px;
-      margin: 0 0 2px;
-      background-image: radial-gradient(circle, #dadade 1.8px, transparent 1.9px);
-      background-size: 14px 10px;
-      background-repeat: repeat-x;
-      background-position: center;
-      opacity: 0.95;
-    }
-
-    .pix-bottom {
-      margin-top: 110px;
-      padding: 0 8px 8px;
-    }
-
-    .copy-main-btn {
-      width: 100%;
-      height: 64px;
-      border: 0;
-      border-radius: 24px;
-      background: var(--yellow);
-      color: #111;
-      font-size: 18px;
-      font-weight: 900;
-      letter-spacing: -0.2px;
-      cursor: pointer;
-      box-shadow: 0 10px 22px rgba(255, 216, 0, 0.18);
-    }
-
-    .bank-link {
-      display: block;
-      margin-top: 18px;
-      text-align: center;
-      text-decoration: none;
-      color: var(--orange);
-      font-size: 16px;
-      font-weight: 500;
-      letter-spacing: -0.1px;
-    }
-
-    /* QR MODAL */
-    .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.58);
-      display: none;
-      z-index: 50;
-    }
-
-    .overlay.active {
-      display: block;
-    }
-
-    .sheet {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      width: 100%;
-      max-width: 430px;
-      min-height: 60dvh;
-      margin: 0 auto;
-      background: #ffffff;
-      border-radius: 30px 30px 0 0;
-      padding: 16px 20px calc(26px + var(--safe-bottom));
-      box-shadow: 0 -12px 40px rgba(0,0,0,.12);
-      animation: sheetUp .26s ease;
-    }
-
-    @keyframes sheetUp {
-      from {
-        transform: translateY(24px);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-
-    .sheet-close-wrap {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 12px;
-    }
-
-    .sheet-close {
-      width: 40px;
-      height: 40px;
-      border: 0;
-      background: transparent;
-      border-radius: 999px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      padding: 0;
-    }
-
-    .sheet-close svg {
-      width: 25px;
-      height: 25px;
-      stroke: #111;
-      stroke-width: 2.35;
-      fill: none;
-    }
-
-    .qr-frame {
-      width: 100%;
-      max-width: 292px;
-      aspect-ratio: 1 / 1;
-      margin: 4px auto 22px;
-      background: #ffffff;
-      border-radius: 28px;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid #f0f0f2;
-      padding: 16px;
-    }
-
-    .corner {
-      position: absolute;
-      width: 44px;
-      height: 44px;
-      border-color: #e5e5e9;
-      border-style: solid;
-      pointer-events: none;
-    }
-
-    .corner.tl {
-      top: 12px;
-      left: 12px;
-      border-width: 4px 0 0 4px;
-      border-top-left-radius: 18px;
-    }
-
-    .corner.tr {
-      top: 12px;
-      right: 12px;
-      border-width: 4px 4px 0 0;
-      border-top-right-radius: 18px;
-    }
-
-    .corner.bl {
-      bottom: 12px;
-      left: 12px;
-      border-width: 0 0 4px 4px;
-      border-bottom-left-radius: 18px;
-    }
-
-    .corner.br {
-      bottom: 12px;
-      right: 12px;
-      border-width: 0 4px 4px 0;
-      border-bottom-right-radius: 18px;
-    }
-
-    #qrcodeModalCanvas,
-    #qrcodeModalCanvas img,
-    #qrcodeModalCanvas canvas {
-      width: 100% !important;
-      max-width: 238px !important;
-      height: auto !important;
-      display: block;
-      margin: 0 auto;
-    }
-
-    .sheet-title {
-      margin: 0 auto 12px;
-      text-align: center;
-      font-size: 21px;
-      line-height: 1.18;
-      font-weight: 900;
-      letter-spacing: -0.45px;
-      max-width: 320px;
-    }
-
-    .sheet-subtitle {
-      margin: 0 auto;
-      text-align: center;
-      font-size: 13px;
-      line-height: 1.36;
-      color: var(--muted);
-      max-width: 330px;
-    }
-
-    @media (max-width: 380px) {
-      .checkout-hero h1 {
-        font-size: 28px;
-      }
-
-      .pix-value {
-        font-size: 35px;
-      }
-
-      .soft-card-title,
-      .summary-card-title {
-        font-size: 17px;
-      }
-
-      .copy-main-btn,
-      .continue-btn {
-        height: 60px;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="./style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+  <script src="./script.js" defer></script>
 </head>
 <body>
-  <main class="app">
-    <!-- CHECKOUT -->
-    <section id="checkoutScreen" class="screen active">
-      <header class="topbar">
-        <button class="back-btn" type="button" aria-label="Voltar">
-          <svg viewBox="0 0 24 24">
-            <path d="M15 19L8 12L15 5"></path>
-          </svg>
+  <main class="app-shell" aria-live="polite">
+    <section id="checkoutScreen" class="screen screen-checkout active" data-screen="checkout">
+      <header class="app-header centered">
+        <button class="icon-button back" type="button" aria-label="Voltar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 4.8 8.3 12l7.2 7.2"/></svg>
         </button>
-        <div class="topbar-title">Transferência Pix</div>
+        <h1>Transferência Pix</h1>
       </header>
 
       <section class="checkout-hero">
-        <h1>Selecione o destinatário</h1>
-        <p>Preencha seus dados para gerar o Pix com aprovação imediata.</p>
+        <h2>Selecione o destinatário</h2>
+        <p>Preencha os dados abaixo para gerar o Pix com aprovação imediata.</p>
       </section>
 
-      <section class="data-sheet">
-        <div class="field-row">
-          <label class="field-label" for="fullName">Nome completo</label>
-          <div class="field-input-wrap">
-            <input
-              id="fullName"
-              class="field-input"
-              type="text"
-              placeholder="Nome e sobrenome"
-              autocomplete="name"
-            />
-          </div>
-        </div>
-
-        <div class="field-row">
-          <label class="field-label" for="phone">Telefone / WhatsApp</label>
-          <div class="field-input-wrap">
-            <div class="country-chip">BR +55</div>
-            <input
-              id="phone"
-              class="field-input"
-              type="tel"
-              placeholder="(11) 99999-9999"
-              autocomplete="tel"
-              inputmode="numeric"
-            />
-          </div>
-        </div>
-      </section>
-
-      <section class="quick-summary">
-        <h2 class="quick-summary-title">Resumo</h2>
-
-        <div class="summary-card">
-          <div class="summary-card-left">
-            <p class="summary-card-title">Taxa de Segurança</p>
-            <p class="summary-card-subtitle">Pagamento via Pix • aprovação imediata</p>
+      <form id="checkoutForm" novalidate>
+        <section class="form-panel" aria-label="Dados do destinatário">
+          <div class="field-line">
+            <label for="fullName">Nome completo</label>
+            <input id="fullName" name="fullName" type="text" autocomplete="name" placeholder="Nome e sobrenome" />
+            <span class="field-error" id="nameError">Digite nome e sobrenome.</span>
           </div>
 
-          <div class="summary-card-price" id="checkoutValue">R$ 22,74</div>
+          <div class="field-line phone-line">
+            <label for="phone">Telefone / WhatsApp</label>
+            <div class="phone-input-row">
+              <button class="country-chip" type="button" aria-label="Código do país Brasil">BR +55</button>
+              <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="numeric" placeholder="(11) 99999-9999" />
+            </div>
+            <span class="field-error" id="phoneError">Digite um telefone válido.</span>
+          </div>
+        </section>
+
+        <section class="transfer-group" aria-label="Resumo da transferência">
+          <h3>Resumo</h3>
+
+          <article class="recipient-card">
+            <div class="recipient-avatar">TS</div>
+            <div class="recipient-info">
+              <strong>Taxa de Segurança</strong>
+              <span>Pagamento via Pix • aprovação imediata</span>
+            </div>
+            <div class="recipient-price" id="checkoutAmount">R$ 22,74</div>
+          </article>
+        </section>
+
+        <section class="security-box" aria-label="Pagamento seguro">
+          <div class="security-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5.5 5.8v5.1c0 4.2 2.8 8.1 6.5 9.1 3.7-1 6.5-4.9 6.5-9.1V5.8L12 3Z"/><path d="m9.5 12 1.7 1.7 3.6-4"/></svg>
+          </div>
+          <div>
+            <strong>Pagamento protegido</strong>
+            <p>Seu Pix será gerado com código copia e cola e QR Code.</p>
+          </div>
+        </section>
+
+        <div class="bottom-fade checkout-bottom">
+          <button id="continueBtn" class="primary-button disabled" type="submit" disabled>
+            <span>Continuar</span>
+            <i class="button-loader" aria-hidden="true"></i>
+          </button>
+          <p class="legal-copy">Ao continuar, você concorda com nossos termos de uso e política de privacidade.</p>
         </div>
-      </section>
-
-      <div class="sticky-bottom">
-        <button id="continueBtn" class="continue-btn disabled" type="button" disabled>
-          Continuar
-        </button>
-
-        <p class="security-note">
-          Ao continuar, você concorda com nossos termos de uso e política de privacidade.
-        </p>
-      </div>
+      </form>
     </section>
 
-    <!-- PIX SCREEN -->
-    <section id="pixScreen" class="screen">
-      <header class="topbar">
-        <button id="backToCheckout" class="back-btn" type="button" aria-label="Voltar">
-          <svg viewBox="0 0 24 24">
-            <path d="M15 19L8 12L15 5"></path>
-          </svg>
+    <section id="pixScreen" class="screen screen-pix" data-screen="pix">
+      <header class="app-header plain">
+        <button id="backToCheckout" class="icon-button back" type="button" aria-label="Voltar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 4.8 8.3 12l7.2 7.2"/></svg>
         </button>
       </header>
 
-      <section class="pix-hero">
-        <svg class="pix-hero-illustration" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <ellipse cx="110" cy="112" rx="78" ry="58" fill="#EBEBEE"/>
-          <circle cx="72" cy="58" r="22" fill="#FFA400"/>
-          <path d="M72 46V58H82" stroke="#121212" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <rect x="88" y="38" width="68" height="104" rx="8" fill="white" stroke="#121212" stroke-width="5"/>
-          <rect x="96" y="53" width="52" height="62" rx="4" fill="#fff"/>
-          <path d="M122 78C116 72 107 72 101 78L106 83C109 80 114 80 117 83L122 78Z" fill="#17C381"/>
-          <path d="M122 78C128 72 137 72 143 78L138 83C135 80 130 80 127 83L122 78Z" fill="#17C381"/>
-          <path d="M122 88C116 94 107 94 101 88L106 83C109 86 114 86 117 83L122 88Z" fill="#17C381"/>
-          <path d="M122 88C128 94 137 94 143 88L138 83C135 86 130 86 127 83L122 88Z" fill="#17C381"/>
-          <path d="M98 130C83 135 70 147 66 160" stroke="#111" stroke-width="5" stroke-linecap="round"/>
-          <path d="M151 101C168 104 184 120 186 140" stroke="#111" stroke-width="5" stroke-linecap="round"/>
-          <path d="M79 132C92 118 111 120 125 137L126 188C111 194 89 189 76 176C66 166 67 145 79 132Z" fill="#F5A3A2"/>
-          <path d="M164 105C152 95 133 95 120 108L122 186C139 194 163 188 176 172C187 159 179 119 164 105Z" fill="#F5A3A2"/>
-        </svg>
-
-        <h2 class="pix-status">Aguardando pagamento</h2>
-        <p class="pix-value" id="pixValue">R$22,74</p>
+      <section class="pix-hero" aria-label="Status do pagamento">
+        <div class="pix-illustration" aria-hidden="true">
+          <svg viewBox="0 0 220 220">
+            <ellipse cx="110" cy="113" rx="76" ry="58" fill="#ececef"/>
+            <circle cx="72" cy="59" r="22" fill="#ff9f0a"/>
+            <path d="M72 47v12h10" fill="none" stroke="#111" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="87" y="39" width="69" height="104" rx="9" fill="#fff" stroke="#121212" stroke-width="5"/>
+            <path d="M122 77c-6-6-15-6-21 0l5 5c3-3 8-3 11 0l5-5Zm0 0c6-6 15-6 21 0l-5 5c-3-3-8-3-11 0l-5-5Zm0 11c-6 6-15 6-21 0l5-5c3 3 8 3 11 0l5 5Zm0 0c6 6 15 6 21 0l-5-5c-3 3-8 3-11 0l-5 5Z" fill="#19c487"/>
+            <path d="M98 130c-15 5-28 17-32 30M151 101c17 3 33 19 35 39" fill="none" stroke="#111" stroke-width="5" stroke-linecap="round"/>
+            <path d="M79 132c13-14 32-12 46 5l1 51c-15 6-37 1-50-12-10-10-9-31 3-44Z" fill="#f4a2a0"/>
+            <path d="M164 105c-12-10-31-10-44 3l2 78c17 8 41 2 54-14 11-13 3-53-12-67Z" fill="#f4a2a0"/>
+          </svg>
+        </div>
+        <h2 id="pixStatusTitle">Aguardando pagamento</h2>
+        <p id="pixAmount" class="pix-amount">R$22,74</p>
       </section>
 
-      <section class="soft-card">
-        <div class="soft-card-header">
-          <div class="soft-card-title-wrap">
-            <div class="mini-round">
-              <svg viewBox="0 0 24 24">
-                <circle cx="12" cy="13" r="7"></circle>
-                <path d="M12 9V13L14.8 14.8"></path>
-                <path d="M9 3H15"></path>
-              </svg>
-            </div>
-            <div class="soft-card-title">Tempo restante</div>
+      <section class="timer-card card-99" aria-label="Tempo restante">
+        <div class="card-title-row">
+          <div class="title-left">
+            <span class="clock-badge" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7"/><path d="M12 9v4l3 1.8"/><path d="M8.5 3.5h7"/></svg>
+            </span>
+            <strong>Tempo restante</strong>
           </div>
-
-          <div id="countdown" class="countdown">09:52</div>
+          <span id="countdown" class="countdown">09:52</span>
         </div>
-
-        <div class="progress">
-          <div id="progressBar" class="progress-bar"></div>
-        </div>
+        <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
       </section>
 
-      <section class="soft-card">
-        <div class="soft-card-header">
-          <div class="soft-card-title-wrap">
-            <div class="mini-round">
-              <div class="yellow-dot"></div>
-            </div>
-            <div class="soft-card-title">Código Pix</div>
+      <section class="pix-code-card card-99" aria-label="Código Pix">
+        <div class="card-title-row">
+          <div class="title-left">
+            <span class="yellow-bullet" aria-hidden="true"><i></i></span>
+            <strong>Código Pix</strong>
           </div>
-
-          <button id="howItWorksBtn" class="soft-card-action" type="button">
-            Como funciona
-            <svg viewBox="0 0 24 24">
-              <path d="M9 5L16 12L9 19"></path>
-            </svg>
-          </button>
+          <button id="howItWorksBtn" class="text-action" type="button">Como funciona <svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
         </div>
 
-        <p class="helper-text">
-          Copie o código abaixo e utilize o Pix Copia e Cola no aplicativo que você vai fazer o pagamento:
-        </p>
+        <p class="instruction-copy">Copie o código abaixo e utilize o Pix Copia e Cola no aplicativo que você vai fazer o pagamento:</p>
 
-        <div class="pix-code-box">
-          <div id="pixCodeText" class="pix-code-text">
-            00020101021226900014br.gov.bcb.pix...
-          </div>
-
-          <button id="copySmallBtn" class="icon-copy-btn" type="button" aria-label="Copiar código Pix">
-            <svg viewBox="0 0 24 24">
-              <rect x="9" y="3" width="11" height="14" rx="2"></rect>
-              <rect x="4" y="8" width="11" height="13" rx="2"></rect>
-            </svg>
+        <div class="copy-code-box">
+          <span id="pixCodePreview">00020101021226900014br.gov.bcb.pix...</span>
+          <button id="copySmallBtn" class="copy-icon" type="button" aria-label="Copiar código Pix">
+            <svg viewBox="0 0 24 24"><rect x="9" y="3" width="11" height="14" rx="2"/><rect x="4" y="8" width="11" height="13" rx="2"/></svg>
           </button>
         </div>
       </section>
 
-      <div class="dotted-divider"></div>
+      <div class="perforation" aria-hidden="true"></div>
 
-      <section class="soft-card">
-        <div class="soft-card-header no-gap">
-          <div class="soft-card-title-wrap">
-            <div class="mini-round">
-              <div class="yellow-dot"></div>
-            </div>
-            <div class="soft-card-title">QR code do Pix</div>
+      <section class="qr-entry-card card-99" aria-label="QR Code Pix">
+        <div class="card-title-row no-margin">
+          <div class="title-left">
+            <span class="yellow-bullet" aria-hidden="true"><i></i></span>
+            <strong>QR code do Pix</strong>
           </div>
-
-          <button id="openQrBtn" class="soft-card-action" type="button">
-            Ver
-            <svg viewBox="0 0 24 24">
-              <path d="M9 5L16 12L9 19"></path>
-            </svg>
-          </button>
+          <button id="openQrBtn" class="text-action" type="button">Ver <svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
         </div>
       </section>
 
-      <div class="pix-bottom">
-        <button id="copyBigBtn" class="copy-main-btn" type="button">
-          Copiar código
+      <div class="bottom-fade pix-bottom">
+        <button id="copyBigBtn" class="primary-button yellow" type="button">Copiar código</button>
+        <a class="bank-link" href="#" id="bankLink">Acesse o app do banco</a>
+      </div>
+    </section>
+
+    <section id="approvedScreen" class="screen screen-result" data-screen="approved">
+      <header class="app-header plain">
+        <button class="icon-button back" id="finishApproved" type="button" aria-label="Voltar ao início">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 4.8 8.3 12l7.2 7.2"/></svg>
         </button>
-
-        <a href="#" class="bank-link">Acesse o app do banco</a>
+      </header>
+      <div class="result-content">
+        <div class="success-mark"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.2 4.2L19 7"/></svg></div>
+        <h2>Pagamento aprovado</h2>
+        <p>Recebemos a confirmação do Pix. Você já pode continuar.</p>
+        <button class="primary-button yellow" type="button" id="newPaymentBtn">Fazer novo pagamento</button>
       </div>
     </section>
   </main>
 
-  <!-- QR MODAL -->
-  <div id="qrOverlay" class="overlay">
-    <div class="sheet">
-      <div class="sheet-close-wrap">
-        <button id="closeQrBtn" class="sheet-close" type="button" aria-label="Fechar">
-          <svg viewBox="0 0 24 24">
-            <path d="M18 6L6 18"></path>
-            <path d="M6 6L18 18"></path>
-          </svg>
+  <div id="loadingOverlay" class="loading-overlay" aria-hidden="true">
+    <div class="loading-card">
+      <span class="spinner"></span>
+      <strong>Criando cobrança Pix</strong>
+      <p>Aguarde alguns segundos...</p>
+    </div>
+  </div>
+
+  <div id="qrOverlay" class="modal-overlay" aria-hidden="true">
+    <div class="qr-sheet" role="dialog" aria-modal="true" aria-label="QR Code Pix">
+      <div class="sheet-close-row">
+        <button id="closeQrBtn" class="sheet-close" type="button" aria-label="Fechar QR Code">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
 
       <div class="qr-frame">
-        <div class="corner tl"></div>
-        <div class="corner tr"></div>
-        <div class="corner bl"></div>
-        <div class="corner br"></div>
-        <div id="qrcodeModalCanvas"></div>
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div id="qrcodeCanvas" class="qr-canvas"></div>
+        <div class="qr-center-mark" aria-hidden="true"><span></span></div>
       </div>
 
-      <h3 class="sheet-title">Use o app do seu banco para escanear o código e pagar</h3>
-      <p class="sheet-subtitle">
-        Após escanear, permaneça nesta página e aguarde a atualização do resultado
-      </p>
+      <h3>Use o app do seu banco para escanear o código e pagar</h3>
+      <p>Após escanear, permaneça nesta página e aguarde a atualização do resultado</p>
     </div>
   </div>
 
-  <script>
-    /********************************************************
-     * CONFIG
-     ********************************************************/
-    const USE_MOCK_API = true; // false = usa sua API real em /api/criar-pix
+  <div id="howModal" class="modal-overlay" aria-hidden="true">
+    <div class="info-sheet" role="dialog" aria-modal="true" aria-label="Como pagar com Pix">
+      <div class="sheet-close-row">
+        <button id="closeHowBtn" class="sheet-close" type="button" aria-label="Fechar instruções">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <h3>Como pagar com Pix</h3>
+      <ol>
+        <li>Copie o código Pix ou abra o QR Code.</li>
+        <li>Acesse o app do seu banco.</li>
+        <li>Escolha Pix Copia e Cola ou escaneie o QR Code.</li>
+        <li>Confirme o pagamento e volte para esta tela.</li>
+      </ol>
+    </div>
+  </div>
 
-    const checkoutScreen = document.getElementById("checkoutScreen");
-    const pixScreen = document.getElementById("pixScreen");
-
-    const fullNameInput = document.getElementById("fullName");
-    const phoneInput = document.getElementById("phone");
-    const continueBtn = document.getElementById("continueBtn");
-
-    const checkoutValueEl = document.getElementById("checkoutValue");
-    const pixValueEl = document.getElementById("pixValue");
-    const pixCodeTextEl = document.getElementById("pixCodeText");
-    const countdownEl = document.getElementById("countdown");
-    const progressBarEl = document.getElementById("progressBar");
-
-    const backToCheckoutBtn = document.getElementById("backToCheckout");
-    const howItWorksBtn = document.getElementById("howItWorksBtn");
-    const copySmallBtn = document.getElementById("copySmallBtn");
-    const copyBigBtn = document.getElementById("copyBigBtn");
-    const openQrBtn = document.getElementById("openQrBtn");
-    const closeQrBtn = document.getElementById("closeQrBtn");
-    const qrOverlay = document.getElementById("qrOverlay");
-    const qrcodeModalCanvas = document.getElementById("qrcodeModalCanvas");
-
-    let totalSeconds = 600;
-    let remainingSeconds = 600;
-    let timerInterval = null;
-    let currentPixCode = "";
-    let currentQrBase64 = "";
-    let currentAmount = 22.74;
-
-    /********************************************************
-     * HELPERS
-     ********************************************************/
-    function formatBRL(value) {
-      return new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-      }).format(Number(value || 0));
-    }
-
-    function formatBRLCompact(value) {
-      return formatBRL(value).replace(/\s/g, "");
-    }
-
-    function showScreen(screen) {
-      checkoutScreen.classList.remove("active");
-      pixScreen.classList.remove("active");
-
-      if (screen === "checkout") {
-        checkoutScreen.classList.add("active");
-      }
-
-      if (screen === "pix") {
-        pixScreen.classList.add("active");
-      }
-    }
-
-    function validateFields() {
-      const name = fullNameInput.value.trim();
-      const phoneDigits = phoneInput.value.replace(/\D/g, "");
-
-      const valid = name.length >= 3 && phoneDigits.length >= 10;
-
-      continueBtn.disabled = !valid;
-      continueBtn.classList.toggle("enabled", valid);
-      continueBtn.classList.toggle("disabled", !valid);
-    }
-
-    function maskPhone(value) {
-      const digits = value.replace(/\D/g, "").slice(0, 11);
-
-      if (digits.length <= 10) {
-        return digits
-          .replace(/^(\d{0,2})/, "($1")
-          .replace(/^\((\d{2})(\d)/, "($1) $2")
-          .replace(/(\d{4})(\d)/, "$1-$2");
-      }
-
-      return digits
-        .replace(/^(\d{0,2})/, "($1")
-        .replace(/^\((\d{2})(\d)/, "($1) $2")
-        .replace(/(\d{5})(\d)/, "$1-$2");
-    }
-
-    function truncateCode(code) {
-      if (!code) return "";
-      return code.length > 46 ? code.slice(0, 46) + "..." : code;
-    }
-
-    async function copyText(text) {
-      try {
-        await navigator.clipboard.writeText(text);
-        return true;
-      } catch (error) {
-        const textarea = document.createElement("textarea");
-        textarea.value = text;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        textarea.remove();
-        return true;
-      }
-    }
-
-    function startCountdown(seconds) {
-      clearInterval(timerInterval);
-
-      totalSeconds = seconds;
-      remainingSeconds = seconds;
-      updateCountdown();
-
-      timerInterval = setInterval(() => {
-        remainingSeconds--;
-
-        if (remainingSeconds <= 0) {
-          remainingSeconds = 0;
-          updateCountdown();
-          clearInterval(timerInterval);
-          return;
-        }
-
-        updateCountdown();
-      }, 1000);
-    }
-
-    function updateCountdown() {
-      const min = Math.floor(remainingSeconds / 60);
-      const sec = remainingSeconds % 60;
-
-      countdownEl.textContent =
-        String(min).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
-
-      const percent = (remainingSeconds / totalSeconds) * 100;
-      progressBarEl.style.width = percent + "%";
-    }
-
-    function renderQr() {
-      qrcodeModalCanvas.innerHTML = "";
-
-      if (currentQrBase64) {
-        const img = document.createElement("img");
-        img.src = currentQrBase64.startsWith("data:")
-          ? currentQrBase64
-          : "data:image/png;base64," + currentQrBase64;
-        img.alt = "QR Code Pix";
-        qrcodeModalCanvas.appendChild(img);
-        return;
-      }
-
-      new QRCode(qrcodeModalCanvas, {
-        text: currentPixCode,
-        width: 238,
-        height: 238,
-        colorDark: "#000000",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.M
-      });
-    }
-
-    function openQrModal() {
-      renderQr();
-      qrOverlay.classList.add("active");
-      document.body.style.overflow = "hidden";
-    }
-
-    function closeQrModal() {
-      qrOverlay.classList.remove("active");
-      document.body.style.overflow = "";
-    }
-
-    function fillPixScreen(data) {
-      currentAmount = Number(data.valor || 22.74);
-      currentPixCode = data.pixCopiaECola || data.qrCodeText || "";
-      currentQrBase64 = data.qrCodeBase64 || "";
-
-      checkoutValueEl.textContent = formatBRL(currentAmount);
-      pixValueEl.textContent = formatBRLCompact(currentAmount);
-      pixCodeTextEl.textContent = truncateCode(currentPixCode);
-
-      startCountdown(Number(data.expiresIn || 600));
-      showScreen("pix");
-    }
-
-    /********************************************************
-     * API
-     ********************************************************/
-    async function createPayload() {
-      return {
-        nome: fullNameInput.value.trim(),
-        telefone: phoneInput.value.trim(),
-        produto: "Taxa de Segurança",
-        valor: 22.74
-      };
-    }
-
-    async function createPixMock(payload) {
-      await new Promise(resolve => setTimeout(resolve, 900));
-
-      return {
-        sucesso: true,
-        valor: payload.valor,
-        expiresIn: 592,
-        pixCopiaECola:
-          "00020101021226900014br.gov.bcb.pix2571pix.exemplo.com/qr/v2/cob/98f7f2e2c0c34f8d8d0aa41a8d9a52035204000053039865802BR5925EMPRESA EXEMPLO LTDA6009SAO PAULO62070503***6304A1B2",
-        qrCodeText:
-          "00020101021226900014br.gov.bcb.pix2571pix.exemplo.com/qr/v2/cob/98f7f2e2c0c34f8d8d0aa41a8d9a52035204000053039865802BR5925EMPRESA EXEMPLO LTDA6009SAO PAULO62070503***6304A1B2",
-        qrCodeBase64: ""
-      };
-    }
-
-    async function createPixReal(payload) {
-      const response = await fetch("/api/criar-pix", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Erro ao gerar Pix.");
-      }
-
-      return data;
-    }
-
-    /********************************************************
-     * EVENTS
-     ********************************************************/
-    fullNameInput.addEventListener("input", validateFields);
-
-    phoneInput.addEventListener("input", (e) => {
-      e.target.value = maskPhone(e.target.value);
-      validateFields();
-    });
-
-    continueBtn.addEventListener("click", async () => {
-      if (continueBtn.disabled) return;
-
-      continueBtn.disabled = true;
-      continueBtn.textContent = "Gerando Pix...";
-
-      try {
-        const payload = await createPayload();
-
-        const data = USE_MOCK_API
-          ? await createPixMock(payload)
-          : await createPixReal(payload);
-
-        fillPixScreen(data);
-      } catch (error) {
-        console.error(error);
-        alert("Não foi possível gerar o Pix.");
-      } finally {
-        continueBtn.textContent = "Continuar";
-        validateFields();
-      }
-    });
-
-    backToCheckoutBtn.addEventListener("click", () => {
-      clearInterval(timerInterval);
-      showScreen("checkout");
-    });
-
-    copySmallBtn.addEventListener("click", async () => {
-      if (!currentPixCode) return;
-
-      await copyText(currentPixCode);
-
-      const old = copySmallBtn.innerHTML;
-      copySmallBtn.innerHTML = "✓";
-
-      setTimeout(() => {
-        copySmallBtn.innerHTML = old;
-      }, 1200);
-    });
-
-    copyBigBtn.addEventListener("click", async () => {
-      if (!currentPixCode) return;
-
-      await copyText(currentPixCode);
-
-      const oldText = copyBigBtn.textContent;
-      copyBigBtn.textContent = "Código copiado";
-
-      setTimeout(() => {
-        copyBigBtn.textContent = oldText;
-      }, 1400);
-    });
-
-    howItWorksBtn.addEventListener("click", () => {
-      alert("Copie o código Pix e cole no app do seu banco, ou toque em 'Ver' para abrir o QR code.");
-    });
-
-    openQrBtn.addEventListener("click", openQrModal);
-    closeQrBtn.addEventListener("click", closeQrModal);
-
-    qrOverlay.addEventListener("click", (e) => {
-      if (e.target === qrOverlay) closeQrModal();
-    });
-
-    validateFields();
-  </script>
+  <div id="toast" class="toast" role="status">Código copiado</div>
 </body>
 </html>
