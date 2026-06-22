@@ -315,7 +315,7 @@ svg { display: block; }
 }
 .pix-method__check svg {
   width: 18px; height: 18px;
-  stroke: #fff; stroke-width: 2.3; fill: none; stroke-linecap: round; stroke-linejoin: round;
+  stroke: #111111; stroke-width: 2.3; fill: none; stroke-linecap: round; stroke-linejoin: round;
 }
 
 .primary-btn {
@@ -659,7 +659,7 @@ svg { display: block; }
 }
 
 .field__icon--person {
-  color: initial;
+  color: #7d7d84;
 }
 
 .field--phone {
