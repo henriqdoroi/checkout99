@@ -1,24 +1,26 @@
-/*
-  Se você tiver a fonte DiDi Sans licenciada, coloque os arquivos em /fonts e descomente.
-  @font-face {
-    font-family: "DiDi Sans";
-    src: url("./fonts/DiDiSans-Regular.woff2") format("woff2");
-    font-weight: 400;
-    font-style: normal;
-  }
-  @font-face {
-    font-family: "DiDi Sans";
-    src: url("./fonts/DiDiSans-Medium.woff2") format("woff2");
-    font-weight: 500;
-    font-style: normal;
-  }
-  @font-face {
-    font-family: "DiDi Sans";
-    src: url("./fonts/DiDiSans-Bold.woff2") format("woff2");
-    font-weight: 700 900;
-    font-style: normal;
-  }
-*/
+@font-face {
+  font-family: "DiDi Sans Pro";
+  src: url("./fonts/DiDiSans-Pro-Regular.53ca6a1d.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DiDi Sans Pro";
+  src: url("./fonts/DiDiSans-Pro-Bold.b5e214b1.woff2") format("woff2");
+  font-weight: 700 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DiDi Sans Flex";
+  src: url("./fonts/DiDiSansFlexBRVF-s.p.09074a25.woff2") format("woff2");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   --bg: #f6f6f7;
@@ -41,7 +43,7 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
 body {
-  font-family: "DiDi Sans", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Arial, sans-serif;
+  font-family: "DiDi Sans Flex", "DiDi Sans Pro", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Arial, sans-serif;
   min-height: 100dvh;
 }
 button, input { font: inherit; }
