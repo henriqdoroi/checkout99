@@ -47,14 +47,24 @@
       </section>
 
       <form id="checkoutForm" class="form" autocomplete="on">
-        <label class="field field--single">
+        <label class="field field--single field--person" for="fullName">
           <span class="field__icon field__icon--person" aria-hidden="true">
             <img src="./assets/99person-icon.svg" alt="" />
           </span>
           <input id="fullName" name="fullName" type="text" placeholder="Nome completo" autocomplete="name" required />
         </label>
 
-        <label class="field field--phone">
+        <label class="field field--single field--email" for="email">
+          <span class="field__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M4 6.5H20V17.5H4V6.5Z"></path>
+              <path d="M4.8 7.2L12 12.8L19.2 7.2"></path>
+            </svg>
+          </span>
+          <input id="email" name="email" type="email" placeholder="E-mail" autocomplete="email" required />
+        </label>
+
+        <label class="field field--phone" for="phoneNumber">
           <span class="field__icon" aria-hidden="true">
             <svg viewBox="0 0 24 24">
               <path d="M6.9 3.8L8.9 8.3C9.2 9 9.1 9.8 8.5 10.3L7.4 11.3C8.5 13.7 10.3 15.5 12.7 16.6L13.7 15.5C14.2 14.9 15 14.8 15.7 15.1L20.2 17.1C21 17.5 21.4 18.4 21.1 19.2C20.6 20.8 19.1 21.8 17.5 21.6C9 20.5 2.5 14 1.4 5.5C1.2 3.9 2.2 2.4 3.8 1.9C4.6 1.6 5.5 2 5.9 2.8L6.9 3.8Z"></path>
@@ -67,6 +77,18 @@
               <input id="phoneNumber" name="phoneNumber" type="tel" inputmode="numeric" autocomplete="tel" placeholder="" required />
             </div>
           </div>
+        </label>
+
+        <label class="field field--single field--cpf" for="cpf">
+          <span class="field__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <rect x="3.8" y="5.5" width="16.4" height="13" rx="2.2"></rect>
+              <path d="M7.2 9H16.8"></path>
+              <path d="M7.2 12H12.6"></path>
+              <path d="M7.2 15H10.8"></path>
+            </svg>
+          </span>
+          <input id="cpf" name="cpf" type="tel" inputmode="numeric" placeholder="CPF" autocomplete="off" required />
         </label>
 
         <section class="pix-method" aria-label="Forma de pagamento">
@@ -96,7 +118,7 @@
       </header>
 
       <section class="pix-hero">
-        <!-- Troque o src abaixo para o GIF/PNG que você quiser mostrar acima de “Aguardando pagamento”. -->
+        <!-- Troque o src abaixo para o GIF/PNG/JPG que você quiser mostrar acima de “Aguardando pagamento”. -->
         <div class="pix-media">
           <img class="pix-media__img" src="./assets/pixgerado.jpg" alt="Pix gerado" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
           <svg class="pix-media__fallback" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -167,7 +189,7 @@
       </section>
     </section>
 
-    <!-- APPROVED -->
+    <!-- APPROVED FALLBACK -->
     <section class="screen screen-approved" id="approvedScreen" aria-label="Pagamento aprovado">
       <div class="approved-box">
         <span class="approved-badge" aria-hidden="true">
@@ -175,7 +197,7 @@
         </span>
         <h2>Pagamento aprovado</h2>
         <p>Recebemos a confirmação do Pix.</p>
-        <button class="primary-btn primary-btn--solid" id="finishBtn" type="button">Concluir</button>
+        <button class="primary-btn primary-btn--solid" id="finishBtn" type="button">Ir para o upsell</button>
       </div>
     </section>
   </main>

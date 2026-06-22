@@ -1,11 +1,26 @@
 const CONFIG = {
-  useMockApi: true,
+  // Produção: deixar false para usar as rotas /api/criar-pix e /api/pix-status.
+  // Teste visual local: pode colocar true.
+  useMockApi: false,
+
   amount: 32.57,
   productName: "Taxa de Segurança",
+
+  // Se você usa UTMify, cole aqui o product_id real do produto BravoPay.
+  // Também dá para configurar no Vercel como BRAVOPAY_PRODUCT_ID.
+  productId: "",
+
   createPixEndpoint: "/api/criar-pix",
   statusEndpoint: "/api/pix-status",
-  pollingEveryMs: 4000,
-  mockApproveAfterSeconds: 0
+
+  // Polling obrigatório a cada 3s conforme solicitado.
+  pollingEveryMs: 3000,
+
+  // Redirecionamento imediato após status PAID.
+  upsellUrl: "/upsell",
+
+  mockApproveAfterSeconds: 0,
+  utmStorageKey: "checkout_first_utm_bravo"
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -20,7 +35,9 @@ const els = {
   app: $("#app"),
   form: $("#checkoutForm"),
   fullName: $("#fullName"),
+  email: $("#email"),
   phone: $("#phoneNumber"),
+  cpf: $("#cpf"),
   generate: $("#generatePixBtn"),
   productName: $("#productName"),
   checkoutAmount: $("#checkoutAmount"),
@@ -48,7 +65,8 @@ let currentPix = {
   qrBase64: "",
   amount: CONFIG.amount,
   expiresIn: 600,
-  createdAt: null
+  createdAt: null,
+  status: "PENDING"
 };
 
 let countdownInterval = null;
@@ -60,25 +78,36 @@ let toastTimer = null;
 init();
 
 function init() {
+  captureUtmOnFirstAccess();
+
   els.productName.textContent = CONFIG.productName;
   els.checkoutAmount.textContent = formatBRL(CONFIG.amount);
   els.pixAmount.textContent = formatBRLCompact(CONFIG.amount);
+
   toggleBannerFallback();
   validateCheckout();
 
   els.fullName.addEventListener("input", validateCheckout);
+  els.email.addEventListener("input", validateCheckout);
   els.phone.addEventListener("input", handlePhoneInput);
+  els.cpf.addEventListener("input", handleCpfInput);
+
   els.form.addEventListener("submit", handleCreatePix);
   els.backToCheckout.addEventListener("click", backToCheckout);
   els.copySmall.addEventListener("click", () => copyCurrentPixCode());
   els.copyBig.addEventListener("click", () => copyCurrentPixCode(true));
   els.openQr.addEventListener("click", openQrModal);
   els.closeQr.addEventListener("click", closeQrModal);
+
   els.qrOverlay.addEventListener("click", (event) => {
     if (event.target === els.qrOverlay) closeQrModal();
   });
-  els.howItWorks.addEventListener("click", () => showToast("Copie o código ou escaneie o QR no app do banco"));
-  els.finish.addEventListener("click", () => showScreen("checkout"));
+
+  els.howItWorks.addEventListener("click", () => {
+    showToast("Copie o código ou escaneie o QR no app do banco");
+  });
+
+  els.finish.addEventListener("click", redirectToUpsell);
 
   if (els.bannerImage) {
     els.bannerImage.addEventListener("error", toggleBannerFallback);
@@ -97,15 +126,29 @@ function handlePhoneInput(event) {
   validateCheckout();
 }
 
+function handleCpfInput(event) {
+  event.target.value = maskCpf(event.target.value);
+  validateCheckout();
+}
+
 function validateCheckout() {
   const name = els.fullName.value.trim();
-  const phoneDigits = els.phone.value.replace(/\D/g, "");
-  const valid = name.length >= 3 && phoneDigits.length >= 10;
+  const email = els.email.value.trim();
+  const phoneDigits = onlyDigits(els.phone.value);
+  const cpfDigits = onlyDigits(els.cpf.value);
+
+  const valid =
+    name.length >= 3 &&
+    isValidEmail(email) &&
+    phoneDigits.length >= 10 &&
+    isValidCpf(cpfDigits);
+
   els.generate.disabled = !valid;
 }
 
 async function handleCreatePix(event) {
   event.preventDefault();
+
   const payload = buildPayload();
   if (!payload) return;
 
@@ -113,13 +156,14 @@ async function handleCreatePix(event) {
 
   try {
     const data = CONFIG.useMockApi ? await createPixMock(payload) : await createPixReal(payload);
+
     fillPixData(data);
     showScreen("pix");
     startCountdown(currentPix.expiresIn);
     startPolling();
   } catch (error) {
     console.error(error);
-    showToast("Não foi possível gerar o Pix");
+    showToast(error.message || "Não foi possível gerar o Pix");
   } finally {
     setLoading(false);
   }
@@ -127,18 +171,42 @@ async function handleCreatePix(event) {
 
 function buildPayload() {
   const nome = els.fullName.value.trim();
+  const email = els.email.value.trim();
   const telefone = els.phone.value.trim();
+  const cpf = els.cpf.value.trim();
+  const phoneDigits = onlyDigits(telefone);
+  const cpfDigits = onlyDigits(cpf);
 
-  if (!nome || telefone.replace(/\D/g, "").length < 10) {
-    showToast("Preencha nome e telefone");
+  if (nome.length < 3) {
+    showToast("Preencha o nome completo");
+    return null;
+  }
+
+  if (!isValidEmail(email)) {
+    showToast("Preencha um e-mail válido");
+    return null;
+  }
+
+  if (phoneDigits.length < 10) {
+    showToast("Preencha o telefone");
+    return null;
+  }
+
+  if (!isValidCpf(cpfDigits)) {
+    showToast("Preencha um CPF válido");
     return null;
   }
 
   return {
     nome,
+    email,
     telefone,
+    cpf,
     produto: CONFIG.productName,
-    valor: CONFIG.amount
+    valor: CONFIG.amount,
+    product_id: CONFIG.productId || undefined,
+    external_reference: createExternalReference(),
+    utm: getStoredUtm()
   };
 }
 
@@ -149,7 +217,7 @@ async function createPixReal(payload) {
     body: JSON.stringify(payload)
   });
 
-  const data = await response.json();
+  const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.message || "Erro ao gerar Pix");
   return data;
 }
@@ -160,6 +228,7 @@ async function createPixMock(payload) {
   return {
     sucesso: true,
     id: "mock_tx_" + Date.now(),
+    status: "PENDING",
     valor: payload.valor,
     expiresIn: 592,
     pixCopiaECola: "00020101021226900014br.gov.bcb.pix2571pix.exemplo.com/qr/v2/cob/f49d8c9b6de2450e9f78185204000053039865802BR5924PAGAMENTO SEGURO6009SAO PAULO62070503***6304A1B2",
@@ -171,12 +240,17 @@ async function createPixMock(payload) {
 function fillPixData(data) {
   currentPix = {
     id: data.id || data.transactionId || data.txid || null,
-    code: data.pixCopiaECola || data.qrCodeText || data.copyPaste || "",
+    status: String(data.status || "PENDING").toUpperCase(),
+    code: data.pixCopiaECola || data.qrCodeText || data.copyPaste || data?.pix?.copy_paste || "",
     qrBase64: data.qrCodeBase64 || data.qrcodeBase64 || data.qrBase64 || "",
-    amount: Number(data.valor || data.amount || CONFIG.amount),
-    expiresIn: Number(data.expiresIn || data.expiration || 600),
+    amount: Number(data.valor || data.amount || centsToBRL(data.amount_cents) || CONFIG.amount),
+    expiresIn: Number(data.expiresIn || data.expiration || secondsUntil(data.expiresAt || data.expires_at) || 600),
     createdAt: Date.now()
   };
+
+  if (!currentPix.code) {
+    throw new Error("A API não retornou o código Pix copia e cola.");
+  }
 
   els.checkoutAmount.textContent = formatBRL(currentPix.amount);
   els.pixAmount.textContent = formatBRLCompact(currentPix.amount);
@@ -197,8 +271,8 @@ function backToCheckout() {
 
 function startCountdown(seconds) {
   clearInterval(countdownInterval);
-  totalSeconds = seconds;
-  remainingSeconds = seconds;
+  totalSeconds = Number(seconds || 600);
+  remainingSeconds = Number(seconds || 600);
   updateTimerUI();
 
   countdownInterval = setInterval(() => {
@@ -221,6 +295,7 @@ function updateTimerUI() {
   const minutes = Math.floor(remainingSeconds / 60);
   const seconds = remainingSeconds % 60;
   els.countdown.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
   const percentage = totalSeconds > 0 ? (remainingSeconds / totalSeconds) * 100 : 0;
   els.progressBar.style.width = `${percentage}%`;
 }
@@ -230,24 +305,39 @@ function startPolling() {
 
   if (CONFIG.useMockApi) {
     if (CONFIG.mockApproveAfterSeconds > 0) {
-      pollingTimer = setTimeout(approvePayment, CONFIG.mockApproveAfterSeconds * 1000);
+      pollingTimer = setTimeout(redirectToUpsell, CONFIG.mockApproveAfterSeconds * 1000);
     }
     return;
   }
 
-  if (!currentPix.id) return;
+  if (!currentPix.id) {
+    showToast("ID da transação não retornado");
+    return;
+  }
 
-  pollingTimer = setInterval(async () => {
-    try {
-      const data = await fetchPixStatus(currentPix.id);
-      const status = String(data.status || data.paymentStatus || "").toLowerCase();
-      if (["paid", "approved", "aprovado", "pago", "completed", "concluido"].includes(status)) {
-        approvePayment();
-      }
-    } catch (error) {
-      console.warn("Erro ao consultar Pix", error);
+  // Consulta imediatamente e depois a cada 3 segundos.
+  checkPixStatusOnce();
+  pollingTimer = setInterval(checkPixStatusOnce, CONFIG.pollingEveryMs);
+}
+
+async function checkPixStatusOnce() {
+  try {
+    const data = await fetchPixStatus(currentPix.id);
+    const status = String(data.status || data.paymentStatus || "").toUpperCase();
+
+    if (status === "PAID") {
+      redirectToUpsell();
+      return;
     }
-  }, CONFIG.pollingEveryMs);
+
+    if (["EXPIRED", "FAILED", "CANCELED", "CANCELLED"].includes(status)) {
+      stopPolling();
+      clearInterval(countdownInterval);
+      showToast(status === "EXPIRED" ? "Pix expirado" : "Pagamento não aprovado");
+    }
+  } catch (error) {
+    console.warn("Erro ao consultar Pix", error);
+  }
 }
 
 function stopPolling() {
@@ -259,19 +349,24 @@ function stopPolling() {
 
 async function fetchPixStatus(id) {
   const response = await fetch(`${CONFIG.statusEndpoint}?id=${encodeURIComponent(id)}`);
-  const data = await response.json();
+  const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.message || "Erro ao consultar Pix");
   return data;
 }
 
-function approvePayment() {
+function redirectToUpsell() {
   stopPolling();
   clearInterval(countdownInterval);
   closeQrModal();
-  showScreen("approved");
+  window.location.href = CONFIG.upsellUrl;
 }
 
 function openQrModal() {
+  if (!currentPix.code) {
+    showToast("Gere o Pix primeiro");
+    return;
+  }
+
   els.qrcodeCanvas.innerHTML = "";
 
   if (currentPix.qrBase64) {
@@ -291,16 +386,22 @@ function openQrModal() {
   }
 
   els.qrOverlay.classList.add("is-open");
+  els.qrOverlay.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
 }
 
 function closeQrModal() {
   els.qrOverlay.classList.remove("is-open");
+  els.qrOverlay.setAttribute("aria-hidden", "true");
   document.body.style.overflow = "";
 }
 
 async function copyCurrentPixCode(isBigButton = false) {
-  if (!currentPix.code) return;
+  if (!currentPix.code) {
+    showToast("Gere o Pix primeiro");
+    return;
+  }
+
   await copyText(currentPix.code);
   showToast("Código copiado");
 
@@ -338,16 +439,90 @@ function showToast(message) {
   clearTimeout(toastTimer);
   els.toast.textContent = message;
   els.toast.classList.add("is-visible");
-  toastTimer = setTimeout(() => els.toast.classList.remove("is-visible"), 1700);
+  toastTimer = setTimeout(() => els.toast.classList.remove("is-visible"), 1800);
+}
+
+function captureUtmOnFirstAccess() {
+  try {
+    const alreadySaved = localStorage.getItem(CONFIG.utmStorageKey);
+    if (alreadySaved) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const utm = {
+      source: params.get("utm_source") || "",
+      medium: params.get("utm_medium") || "",
+      campaign: params.get("utm_campaign") || "",
+      content: params.get("utm_content") || "",
+      term: params.get("utm_term") || "",
+      fbclid: params.get("fbclid") || "",
+      ttclid: params.get("ttclid") || "",
+      gclid: params.get("gclid") || ""
+    };
+
+    const hasAnyValue = Object.values(utm).some(Boolean);
+    if (hasAnyValue) {
+      localStorage.setItem(CONFIG.utmStorageKey, JSON.stringify(utm));
+    }
+  } catch (error) {
+    console.warn("Não foi possível salvar UTMs", error);
+  }
+}
+
+function getStoredUtm() {
+  try {
+    const saved = localStorage.getItem(CONFIG.utmStorageKey);
+    if (!saved) return {};
+    return JSON.parse(saved) || {};
+  } catch {
+    return {};
+  }
+}
+
+function createExternalReference() {
+  return `pedido_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
 }
 
 function maskPhone(value) {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
+  const digits = onlyDigits(value).slice(0, 11);
   if (!digits) return "";
   if (digits.length <= 2) return `(${digits}`;
   if (digits.length <= 6) return digits.replace(/^(\d{2})(\d+)/, "($1) $2");
   if (digits.length <= 10) return digits.replace(/^(\d{2})(\d{4})(\d+)/, "($1) $2-$3");
   return digits.replace(/^(\d{2})(\d{5})(\d+)/, "($1) $2-$3");
+}
+
+function maskCpf(value) {
+  const digits = onlyDigits(value).slice(0, 11);
+  return digits
+    .replace(/^(\d{3})(\d)/, "$1.$2")
+    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1-$2");
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
+}
+
+function isValidCpf(cpf) {
+  cpf = onlyDigits(cpf);
+  if (cpf.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += Number(cpf[i]) * (10 - i);
+  let digit1 = 11 - (sum % 11);
+  if (digit1 >= 10) digit1 = 0;
+  if (digit1 !== Number(cpf[9])) return false;
+
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += Number(cpf[i]) * (11 - i);
+  let digit2 = 11 - (sum % 11);
+  if (digit2 >= 10) digit2 = 0;
+  return digit2 === Number(cpf[10]);
+}
+
+function onlyDigits(value) {
+  return String(value || "").replace(/\D/g, "");
 }
 
 function truncatePix(code) {
@@ -361,6 +536,18 @@ function formatBRL(value) {
 
 function formatBRLCompact(value) {
   return formatBRL(value).replace(/\s/g, "");
+}
+
+function centsToBRL(cents) {
+  if (cents === undefined || cents === null || cents === "") return null;
+  return Number(cents) / 100;
+}
+
+function secondsUntil(isoDate) {
+  if (!isoDate) return null;
+  const ms = new Date(isoDate).getTime() - Date.now();
+  if (!Number.isFinite(ms)) return null;
+  return Math.max(0, Math.floor(ms / 1000));
 }
 
 function wait(ms) {
