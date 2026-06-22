@@ -1,446 +1,390 @@
-(() => {
-  "use strict";
+const CONFIG = {
+  // true = simulação para testar visual. false = usa /api/criar-pix e /api/pix-status?id=...
+  useMockApi: true,
+  amount: 32.57,
+  productName: "Taxa de Segurança",
+  createPixEndpoint: "/api/criar-pix",
+  statusEndpoint: "/api/pix-status",
+  pollingEveryMs: 4000,
+  mockApproveAfterSeconds: 0 // coloque 15 para testar aprovação automática no mock
+};
 
-  /************************************************************
-   * CONFIGURAÇÃO
-   ************************************************************/
-  const CONFIG = {
-    useMockApi: true, // coloque false para chamar /api/criar-pix
-    createPixEndpoint: "/api/criar-pix",
-    statusPixEndpoint: "/api/status-pix",
-    productName: "Taxa de Segurança",
-    amount: 22.74,
-    defaultExpiresIn: 592,
-    enableStatusPolling: true,
-    mockApproveAfterMs: 0 // teste: coloque 8000 para simular aprovação automática
-  };
+const $ = (selector) => document.querySelector(selector);
 
-  /************************************************************
-   * ELEMENTOS
-   ************************************************************/
-  const $ = (selector) => document.querySelector(selector);
+const screens = {
+  checkout: $("#checkoutScreen"),
+  pix: $("#pixScreen"),
+  approved: $("#approvedScreen")
+};
 
-  const screens = {
-    checkout: $("#checkoutScreen"),
-    pix: $("#pixScreen"),
-    approved: $("#approvedScreen")
-  };
+const els = {
+  form: $("#checkoutForm"),
+  fullName: $("#fullName"),
+  phone: $("#phoneNumber"),
+  generate: $("#generatePixBtn"),
+  checkoutAmount: $("#checkoutAmount"),
+  pixAmount: $("#pixAmountGenerated"),
+  pixCodeText: $("#pixCodeText"),
+  countdown: $("#countdown"),
+  progressBar: $("#progressBar"),
+  backToCheckout: $("#backToCheckout"),
+  howItWorks: $("#howItWorksBtn"),
+  copySmall: $("#copySmallBtn"),
+  copyBig: $("#copyBigBtn"),
+  openQr: $("#openQrBtn"),
+  closeQr: $("#closeQrBtn"),
+  qrOverlay: $("#qrOverlay"),
+  qrcodeCanvas: $("#qrcodeModalCanvas"),
+  finish: $("#finishBtn"),
+  toast: $("#toast")
+};
 
-  const checkoutForm = $("#checkoutForm");
-  const fullName = $("#fullName");
-  const phone = $("#phone");
-  const nameErrorLine = fullName.closest(".field-line");
-  const phoneErrorLine = phone.closest(".field-line");
-  const continueBtn = $("#continueBtn");
-  const loadingOverlay = $("#loadingOverlay");
+let currentPix = {
+  id: null,
+  code: "",
+  qrBase64: "",
+  amount: CONFIG.amount,
+  expiresIn: 600,
+  createdAt: null
+};
 
-  const pixAmount = $("#pixAmount");
-  const pixCodePreview = $("#pixCodePreview");
-  const countdown = $("#countdown");
-  const progressBar = $("#progressBar");
-  const pixStatusTitle = $("#pixStatusTitle");
+let countdownInterval = null;
+let pollingInterval = null;
+let totalSeconds = 600;
+let remainingSeconds = 600;
 
-  const backToCheckout = $("#backToCheckout");
-  const copySmallBtn = $("#copySmallBtn");
-  const copyBigBtn = $("#copyBigBtn");
-  const openQrBtn = $("#openQrBtn");
-  const closeQrBtn = $("#closeQrBtn");
-  const qrOverlay = $("#qrOverlay");
-  const qrcodeCanvas = $("#qrcodeCanvas");
-  const howItWorksBtn = $("#howItWorksBtn");
-  const howModal = $("#howModal");
-  const closeHowBtn = $("#closeHowBtn");
-  const toast = $("#toast");
-  const finishApproved = $("#finishApproved");
-  const newPaymentBtn = $("#newPaymentBtn");
+init();
 
-  /************************************************************
-   * ESTADO
-   ************************************************************/
-  const state = {
-    transactionId: null,
-    currentPixCode: "",
-    currentQrBase64: "",
-    currentAmount: CONFIG.amount,
-    totalSeconds: CONFIG.defaultExpiresIn,
-    remainingSeconds: CONFIG.defaultExpiresIn,
-    timer: null,
-    polling: null,
-    toastTimer: null,
-    mockApprovalTimer: null
-  };
+function init() {
+  els.checkoutAmount.textContent = formatBRL(CONFIG.amount);
+  els.pixAmount.textContent = formatBRLCompact(CONFIG.amount);
+  validateCheckout();
 
-  /************************************************************
-   * UTILITÁRIOS
-   ************************************************************/
-  function vibrate(ms = 12) {
-    if (navigator.vibrate) navigator.vibrate(ms);
-  }
+  els.fullName.addEventListener("input", validateCheckout);
+  els.phone.addEventListener("input", handlePhoneInput);
+  els.form.addEventListener("submit", handleCreatePix);
+  els.backToCheckout.addEventListener("click", backToCheckout);
+  els.copySmall.addEventListener("click", () => copyCurrentPixCode());
+  els.copyBig.addEventListener("click", () => copyCurrentPixCode(true));
+  els.openQr.addEventListener("click", openQrModal);
+  els.closeQr.addEventListener("click", closeQrModal);
+  els.qrOverlay.addEventListener("click", (event) => {
+    if (event.target === els.qrOverlay) closeQrModal();
+  });
+  els.howItWorks.addEventListener("click", () => {
+    showToast("Copie o código ou escaneie o QR no app do banco");
+  });
+  els.finish.addEventListener("click", () => showScreen("checkout"));
+}
 
-  function money(value, compact = false) {
-    const formatted = new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }).format(Number(value || 0));
+function handlePhoneInput(event) {
+  event.target.value = maskPhone(event.target.value);
+  validateCheckout();
+}
 
-    return compact ? formatted.replace(/\s/g, "") : formatted;
-  }
+function validateCheckout() {
+  const name = els.fullName.value.trim();
+  const phoneDigits = els.phone.value.replace(/\D/g, "");
+  const isValid = name.length >= 3 && phoneDigits.length >= 10;
 
-  function normalizePhone(value) {
-    return String(value || "").replace(/\D/g, "").slice(0, 11);
-  }
+  els.generate.disabled = !isValid;
+}
 
-  function maskPhone(value) {
-    const digits = normalizePhone(value);
+async function handleCreatePix(event) {
+  event.preventDefault();
 
-    if (digits.length <= 2) return digits ? `(${digits}` : "";
-    if (digits.length <= 6) return digits.replace(/^(\d{2})(\d+)/, "($1) $2");
-    if (digits.length <= 10) return digits.replace(/^(\d{2})(\d{4})(\d+)/, "($1) $2-$3");
-    return digits.replace(/^(\d{2})(\d{5})(\d+)/, "($1) $2-$3");
-  }
+  const payload = buildPayload();
+  if (!payload) return;
 
-  function isValidName(value) {
-    const parts = String(value || "").trim().split(/\s+/).filter(Boolean);
-    return parts.length >= 2 && parts.join(" ").length >= 5;
-  }
+  setLoading(true);
 
-  function isValidPhone(value) {
-    const digits = normalizePhone(value);
-    return digits.length >= 10 && digits.length <= 11;
-  }
+  try {
+    const data = CONFIG.useMockApi
+      ? await createPixMock(payload)
+      : await createPixReal(payload);
 
-  function validate({ showErrors = false } = {}) {
-    const nameOk = isValidName(fullName.value);
-    const phoneOk = isValidPhone(phone.value);
-    const valid = nameOk && phoneOk;
-
-    continueBtn.disabled = !valid;
-    continueBtn.classList.toggle("enabled", valid);
-    continueBtn.classList.toggle("disabled", !valid);
-
-    if (showErrors) {
-      nameErrorLine.classList.toggle("invalid", !nameOk);
-      phoneErrorLine.classList.toggle("invalid", !phoneOk);
-    } else {
-      if (nameOk) nameErrorLine.classList.remove("invalid");
-      if (phoneOk) phoneErrorLine.classList.remove("invalid");
-    }
-
-    return valid;
-  }
-
-  function showScreen(name) {
-    Object.values(screens).forEach((screen) => screen.classList.remove("active"));
-    screens[name].classList.add("active");
-    window.scrollTo({ top: 0, behavior: "instant" });
-  }
-
-  function setLoading(active) {
-    loadingOverlay.classList.toggle("active", active);
-    loadingOverlay.setAttribute("aria-hidden", active ? "false" : "true");
-    continueBtn.classList.toggle("loading", active);
-    continueBtn.disabled = active || !validate();
-    document.body.style.overflow = active ? "hidden" : "";
-  }
-
-  function showToast(message = "Código copiado") {
-    clearTimeout(state.toastTimer);
-    toast.textContent = message;
-    toast.classList.add("active");
-    state.toastTimer = setTimeout(() => toast.classList.remove("active"), 1700);
-  }
-
-  async function copyText(text) {
-    if (!text) return;
-
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch (_) {
-      const textarea = document.createElement("textarea");
-      textarea.value = text;
-      textarea.setAttribute("readonly", "");
-      textarea.style.position = "fixed";
-      textarea.style.left = "-9999px";
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      textarea.remove();
-    }
-
-    vibrate();
-    showToast("Código copiado");
-  }
-
-  function truncatePix(code) {
-    if (!code) return "";
-    return code.length > 43 ? `${code.slice(0, 43)}...` : code;
-  }
-
-  function timerText(seconds) {
-    const min = Math.floor(seconds / 60);
-    const sec = seconds % 60;
-    return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-  }
-
-  function stopTimers() {
-    clearInterval(state.timer);
-    clearInterval(state.polling);
-    clearTimeout(state.mockApprovalTimer);
-    state.timer = null;
-    state.polling = null;
-    state.mockApprovalTimer = null;
-  }
-
-  function startCountdown(seconds) {
-    clearInterval(state.timer);
-
-    state.totalSeconds = Number(seconds || CONFIG.defaultExpiresIn);
-    state.remainingSeconds = state.totalSeconds;
-    updateCountdownUI();
-
-    state.timer = setInterval(() => {
-      state.remainingSeconds -= 1;
-
-      if (state.remainingSeconds <= 0) {
-        state.remainingSeconds = 0;
-        updateCountdownUI();
-        clearInterval(state.timer);
-        pixStatusTitle.textContent = "Pix expirado";
-        showToast("O Pix expirou");
-        return;
-      }
-
-      updateCountdownUI();
-    }, 1000);
-  }
-
-  function updateCountdownUI() {
-    countdown.textContent = timerText(state.remainingSeconds);
-    const percent = (state.remainingSeconds / state.totalSeconds) * 100;
-    progressBar.style.width = `${Math.max(0, percent)}%`;
-    progressBar.classList.toggle("low", percent <= 25);
-  }
-
-  function openModal(modal) {
-    modal.classList.add("active");
-    modal.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
-  }
-
-  function closeModal(modal) {
-    modal.classList.remove("active");
-    modal.setAttribute("aria-hidden", "true");
-    document.body.style.overflow = "";
-  }
-
-  function renderQr() {
-    qrcodeCanvas.innerHTML = "";
-
-    if (state.currentQrBase64) {
-      const img = document.createElement("img");
-      img.src = state.currentQrBase64.startsWith("data:")
-        ? state.currentQrBase64
-        : `data:image/png;base64,${state.currentQrBase64}`;
-      img.alt = "QR Code Pix";
-      qrcodeCanvas.appendChild(img);
-      return;
-    }
-
-    if (!window.QRCode) {
-      showToast("Biblioteca QR não carregou");
-      return;
-    }
-
-    new QRCode(qrcodeCanvas, {
-      text: state.currentPixCode,
-      width: 238,
-      height: 238,
-      colorDark: "#000000",
-      colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.H
-    });
-  }
-
-  function getPayload() {
-    return {
-      nome: fullName.value.trim(),
-      telefone: phone.value.trim(),
-      telefoneDigits: normalizePhone(phone.value),
-      produto: CONFIG.productName,
-      valor: CONFIG.amount
-    };
-  }
-
-  /************************************************************
-   * API / MOCK
-   ************************************************************/
-  async function createPix(payload) {
-    if (CONFIG.useMockApi) return createPixMock(payload);
-
-    const response = await fetch(CONFIG.createPixEndpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      throw new Error(data.message || data.error || "Erro ao gerar Pix.");
-    }
-
-    return data;
-  }
-
-  async function createPixMock(payload) {
-    await new Promise((resolve) => setTimeout(resolve, 950));
-
-    return {
-      sucesso: true,
-      id: `mock_${Date.now()}`,
-      valor: payload.valor,
-      expiresIn: CONFIG.defaultExpiresIn,
-      pixCopiaECola: "00020101021226900014br.gov.bcb.pix2571pix.exemplo.com/qr/v2/cob/98f7f2e2c0c34f8d8d0aa41a8d9a52035204000053039865802BR5925EMPRESA EXEMPLO LTDA6009SAO PAULO62070503***6304A1B2",
-      qrCodeText: "00020101021226900014br.gov.bcb.pix2571pix.exemplo.com/qr/v2/cob/98f7f2e2c0c34f8d8d0aa41a8d9a52035204000053039865802BR5925EMPRESA EXEMPLO LTDA6009SAO PAULO62070503***6304A1B2",
-      qrCodeBase64: ""
-    };
-  }
-
-  async function getPaymentStatus(transactionId) {
-    if (!transactionId) return { status: "pending" };
-
-    if (CONFIG.useMockApi) return { status: "pending" };
-
-    const url = `${CONFIG.statusPixEndpoint}?id=${encodeURIComponent(transactionId)}`;
-    const response = await fetch(url, { method: "GET" });
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) return { status: "pending" };
-    return data;
-  }
-
-  function startStatusPolling() {
-    clearInterval(state.polling);
-
-    if (!CONFIG.enableStatusPolling) return;
-
-    if (CONFIG.useMockApi && CONFIG.mockApproveAfterMs > 0) {
-      state.mockApprovalTimer = setTimeout(() => approvePayment(), CONFIG.mockApproveAfterMs);
-      return;
-    }
-
-    if (CONFIG.useMockApi) return;
-
-    state.polling = setInterval(async () => {
-      try {
-        const data = await getPaymentStatus(state.transactionId);
-        const status = String(data.status || data.paymentStatus || "").toLowerCase();
-
-        if (["paid", "approved", "aprovado", "completed", "concluido"].includes(status)) {
-          approvePayment();
-        }
-      } catch (_) {
-        // mantém silencioso para não quebrar UX
-      }
-    }, 5000);
-  }
-
-  function approvePayment() {
-    stopTimers();
-    closeModal(qrOverlay);
-    closeModal(howModal);
-    vibrate(20);
-    showScreen("approved");
-  }
-
-  function fillPixScreen(data) {
-    const amount = Number(data.valor || data.amount || CONFIG.amount);
-    const pixCode = data.pixCopiaECola || data.qrCodeText || data.pixCode || data.copyPaste || "";
-
-    state.transactionId = data.id || data.transactionId || data.txid || null;
-    state.currentAmount = amount;
-    state.currentPixCode = pixCode;
-    state.currentQrBase64 = data.qrCodeBase64 || data.qrCodeImage || data.qrcodeBase64 || "";
-
-    pixAmount.textContent = money(amount, true);
-    pixCodePreview.textContent = truncatePix(pixCode);
-    pixStatusTitle.textContent = "Aguardando pagamento";
-
-    startCountdown(Number(data.expiresIn || data.expirationSeconds || CONFIG.defaultExpiresIn));
+    fillPixData(data);
     showScreen("pix");
-    startStatusPolling();
+    startCountdown(currentPix.expiresIn);
+    startPolling();
+  } catch (error) {
+    console.error(error);
+    showToast("Não foi possível gerar o Pix");
+  } finally {
+    setLoading(false);
+  }
+}
+
+function buildPayload() {
+  const nome = els.fullName.value.trim();
+  const telefone = els.phone.value.trim();
+
+  if (!nome || telefone.replace(/\D/g, "").length < 10) {
+    showToast("Preencha nome e telefone");
+    return null;
   }
 
-  /************************************************************
-   * EVENTOS
-   ************************************************************/
-  fullName.addEventListener("input", () => validate());
-  fullName.addEventListener("blur", () => validate({ showErrors: true }));
+  return {
+    nome,
+    telefone,
+    produto: CONFIG.productName,
+    valor: CONFIG.amount
+  };
+}
 
-  phone.addEventListener("input", () => {
-    phone.value = maskPhone(phone.value);
-    validate();
+async function createPixReal(payload) {
+  const response = await fetch(CONFIG.createPixEndpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
   });
-  phone.addEventListener("blur", () => validate({ showErrors: true }));
 
-  checkoutForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
+  const data = await response.json();
 
-    if (!validate({ showErrors: true })) {
-      vibrate(30);
+  if (!response.ok) {
+    throw new Error(data.message || "Erro ao gerar Pix");
+  }
+
+  return data;
+}
+
+async function createPixMock(payload) {
+  await wait(850);
+
+  return {
+    sucesso: true,
+    id: "mock_tx_" + Date.now(),
+    valor: payload.valor,
+    expiresIn: 592,
+    pixCopiaECola:
+      "00020101021226900014br.gov.bcb.pix2571pix.exemplo.com/qr/v2/cob/f49d8c9b6de2450e9f78185204000053039865802BR5924PAGAMENTO SEGURO6009SAO PAULO62070503***6304A1B2",
+    qrCodeText:
+      "00020101021226900014br.gov.bcb.pix2571pix.exemplo.com/qr/v2/cob/f49d8c9b6de2450e9f78185204000053039865802BR5924PAGAMENTO SEGURO6009SAO PAULO62070503***6304A1B2",
+    qrCodeBase64: ""
+  };
+}
+
+function fillPixData(data) {
+  currentPix = {
+    id: data.id || data.transactionId || data.txid || null,
+    code: data.pixCopiaECola || data.qrCodeText || data.copyPaste || "",
+    qrBase64: data.qrCodeBase64 || data.qrcodeBase64 || data.qrBase64 || "",
+    amount: Number(data.valor || data.amount || CONFIG.amount),
+    expiresIn: Number(data.expiresIn || data.expiration || 600),
+    createdAt: Date.now()
+  };
+
+  els.checkoutAmount.textContent = formatBRL(currentPix.amount);
+  els.pixAmount.textContent = formatBRLCompact(currentPix.amount);
+  els.pixCodeText.textContent = truncatePix(currentPix.code);
+}
+
+function startCountdown(seconds) {
+  clearInterval(countdownInterval);
+
+  totalSeconds = seconds;
+  remainingSeconds = seconds;
+  updateTimerUI();
+
+  countdownInterval = setInterval(() => {
+    remainingSeconds -= 1;
+
+    if (remainingSeconds <= 0) {
+      remainingSeconds = 0;
+      updateTimerUI();
+      clearInterval(countdownInterval);
+      stopPolling();
+      showToast("Pix expirado");
       return;
     }
 
-    setLoading(true);
+    updateTimerUI();
+  }, 1000);
+}
 
-    try {
-      const data = await createPix(getPayload());
-      fillPixScreen(data);
-    } catch (error) {
-      console.error(error);
-      showToast(error.message || "Não foi possível gerar Pix");
-    } finally {
-      setLoading(false);
+function updateTimerUI() {
+  const minutes = Math.floor(remainingSeconds / 60);
+  const seconds = remainingSeconds % 60;
+  els.countdown.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+  const percentage = totalSeconds > 0 ? (remainingSeconds / totalSeconds) * 100 : 0;
+  els.progressBar.style.width = `${percentage}%`;
+}
+
+function startPolling() {
+  stopPolling();
+
+  if (CONFIG.useMockApi) {
+    if (CONFIG.mockApproveAfterSeconds > 0) {
+      pollingInterval = setTimeout(approvePayment, CONFIG.mockApproveAfterSeconds * 1000);
     }
+    return;
+  }
+
+  if (!currentPix.id) return;
+
+  pollingInterval = setInterval(async () => {
+    try {
+      const status = await fetchPixStatus(currentPix.id);
+      const normalized = String(status.status || status.paymentStatus || "").toLowerCase();
+
+      if (["paid", "approved", "aprovado", "pago", "completed", "concluido"].includes(normalized)) {
+        approvePayment();
+      }
+    } catch (error) {
+      console.warn("Erro ao consultar status Pix", error);
+    }
+  }, CONFIG.pollingEveryMs);
+}
+
+async function fetchPixStatus(id) {
+  const response = await fetch(`${CONFIG.statusEndpoint}?id=${encodeURIComponent(id)}`);
+  const data = await response.json();
+
+  if (!response.ok) throw new Error(data.message || "Erro ao consultar Pix");
+  return data;
+}
+
+function approvePayment() {
+  stopPolling();
+  clearInterval(countdownInterval);
+  closeQrModal();
+  showScreen("approved");
+}
+
+function stopPolling() {
+  if (!pollingInterval) return;
+  clearInterval(pollingInterval);
+  clearTimeout(pollingInterval);
+  pollingInterval = null;
+}
+
+function backToCheckout() {
+  stopPolling();
+  clearInterval(countdownInterval);
+  closeQrModal();
+  showScreen("checkout");
+}
+
+async function copyCurrentPixCode(isMain = false) {
+  if (!currentPix.code) return;
+
+  await copyText(currentPix.code);
+  showToast("Código copiado");
+
+  if (isMain) {
+    const old = els.copyBig.textContent;
+    els.copyBig.textContent = "Código copiado";
+    setTimeout(() => (els.copyBig.textContent = old), 1400);
+  }
+}
+
+function openQrModal() {
+  if (!currentPix.code && !currentPix.qrBase64) return;
+
+  renderQr();
+  els.qrOverlay.classList.add("is-active");
+  els.qrOverlay.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+
+function closeQrModal() {
+  els.qrOverlay.classList.remove("is-active");
+  els.qrOverlay.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+
+function renderQr() {
+  els.qrcodeCanvas.innerHTML = "";
+
+  if (currentPix.qrBase64) {
+    const img = document.createElement("img");
+    img.src = currentPix.qrBase64.startsWith("data:")
+      ? currentPix.qrBase64
+      : `data:image/png;base64,${currentPix.qrBase64}`;
+    img.alt = "QR Code Pix";
+    els.qrcodeCanvas.appendChild(img);
+    return;
+  }
+
+  if (typeof QRCode === "undefined") {
+    els.qrcodeCanvas.textContent = "QR indisponível";
+    return;
+  }
+
+  new QRCode(els.qrcodeCanvas, {
+    text: currentPix.code,
+    width: 240,
+    height: 240,
+    colorDark: "#000000",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.M
   });
+}
 
-  backToCheckout.addEventListener("click", () => {
-    stopTimers();
-    showScreen("checkout");
-  });
+function showScreen(name) {
+  Object.values(screens).forEach((screen) => screen.classList.remove("is-active"));
+  screens[name].classList.add("is-active");
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
 
-  copySmallBtn.addEventListener("click", () => copyText(state.currentPixCode));
-  copyBigBtn.addEventListener("click", () => copyText(state.currentPixCode));
+function setLoading(isLoading) {
+  els.generate.disabled = isLoading;
+  els.generate.textContent = isLoading ? "GERANDO..." : "GERAR PIX";
 
-  openQrBtn.addEventListener("click", () => {
-    renderQr();
-    openModal(qrOverlay);
-  });
+  if (!isLoading) validateCheckout();
+}
 
-  closeQrBtn.addEventListener("click", () => closeModal(qrOverlay));
-  qrOverlay.addEventListener("click", (event) => {
-    if (event.target === qrOverlay) closeModal(qrOverlay);
-  });
+function maskPhone(value) {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
 
-  howItWorksBtn.addEventListener("click", () => openModal(howModal));
-  closeHowBtn.addEventListener("click", () => closeModal(howModal));
-  howModal.addEventListener("click", (event) => {
-    if (event.target === howModal) closeModal(howModal);
-  });
+  if (!digits) return "";
+  if (digits.length <= 2) return `(${digits}`;
+  if (digits.length <= 6) return digits.replace(/^(\d{2})(\d+)/, "($1) $2");
+  if (digits.length <= 10) return digits.replace(/^(\d{2})(\d{4})(\d+)/, "($1) $2-$3");
 
-  finishApproved.addEventListener("click", () => showScreen("checkout"));
-  newPaymentBtn.addEventListener("click", () => {
-    fullName.value = "";
-    phone.value = "";
-    validate();
-    showScreen("checkout");
-  });
+  return digits.replace(/^(\d{2})(\d{5})(\d+)/, "($1) $2-$3");
+}
 
-  document.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape") return;
-    closeModal(qrOverlay);
-    closeModal(howModal);
-  });
+function formatBRL(value) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  }).format(Number(value || 0));
+}
 
-  validate();
-})();
+function formatBRLCompact(value) {
+  return formatBRL(value).replace(/\s/g, "");
+}
+
+function truncatePix(code) {
+  if (!code) return "";
+  return code.length > 45 ? `${code.slice(0, 45)}...` : code;
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    textarea.remove();
+  }
+}
+
+function showToast(message) {
+  els.toast.textContent = message;
+  els.toast.classList.add("is-visible");
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => els.toast.classList.remove("is-visible"), 1800);
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

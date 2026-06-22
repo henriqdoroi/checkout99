@@ -3,211 +3,199 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#f6f6f7" />
-  <title>Transferência Pix</title>
-  <link rel="stylesheet" href="./style.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
-  <script src="./script.js" defer></script>
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Checkout Pix</title>
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script defer src="script.js"></script>
 </head>
 <body>
-  <main class="app-shell" aria-live="polite">
-    <section id="checkoutScreen" class="screen screen-checkout active" data-screen="checkout">
-      <header class="app-header centered">
-        <button class="icon-button back" type="button" aria-label="Voltar">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 4.8 8.3 12l7.2 7.2"/></svg>
-        </button>
-        <h1>Transferência Pix</h1>
-      </header>
+  <main class="app-shell" id="appShell">
+    <section class="screen screen-checkout is-active" id="checkoutScreen" aria-label="Checkout Pix">
+      <div class="fake-statusbar" aria-hidden="true">
+        <div class="status-time">14:53</div>
+        <div class="status-icons">
+          <span class="dot-signal">••••</span>
+          <span class="wifi-icon"></span>
+          <span class="battery-icon"></span>
+        </div>
+      </div>
 
-      <section class="checkout-hero">
-        <h2>Selecione o destinatário</h2>
-        <p>Preencha os dados abaixo para gerar o Pix com aprovação imediata.</p>
+      <section class="brand-banner" aria-label="Pagamento seguro">
+        <div class="banner-copy">
+          <div class="brand-line"><strong>Sua</strong><span>Pay</span></div>
+          <p>Pagamento seguro e rápido</p>
+        </div>
+        <div class="banner-shield" aria-hidden="true">
+          <svg viewBox="0 0 90 90">
+            <path d="M45 8L76 20V42C76 62 62 77 45 84C28 77 14 62 14 42V20L45 8Z" />
+            <path d="M28 45L40 57L63 34" />
+          </svg>
+        </div>
       </section>
 
-      <form id="checkoutForm" novalidate>
-        <section class="form-panel" aria-label="Dados do destinatário">
-          <div class="field-line">
-            <label for="fullName">Nome completo</label>
-            <input id="fullName" name="fullName" type="text" autocomplete="name" placeholder="Nome e sobrenome" />
-            <span class="field-error" id="nameError">Digite nome e sobrenome.</span>
-          </div>
+      <section class="checkout-heading">
+        <h1>Preencha os dados abaixo para gerar o Pix</h1>
+        <p>com aprovação imediata.</p>
+      </section>
 
-          <div class="field-line phone-line">
-            <label for="phone">Telefone / WhatsApp</label>
-            <div class="phone-input-row">
-              <button class="country-chip" type="button" aria-label="Código do país Brasil">BR +55</button>
-              <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="numeric" placeholder="(11) 99999-9999" />
-            </div>
-            <span class="field-error" id="phoneError">Digite um telefone válido.</span>
-          </div>
+      <section class="price-row" aria-label="Resumo do pedido">
+        <strong>Taxa de Segurança</strong>
+        <span id="checkoutAmount">R$ 32,57</span>
+      </section>
+
+      <form id="checkoutForm" class="checkout-form" autocomplete="on">
+        <label class="line-input line-input-name" for="fullName">
+          <span class="input-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="7.2" r="4.2"></circle>
+              <path d="M4.5 21C4.5 16.7 7.8 13.7 12 13.7C16.2 13.7 19.5 16.7 19.5 21"></path>
+            </svg>
+          </span>
+          <input id="fullName" name="fullName" type="text" placeholder="Nome completo" autocomplete="name" required />
+        </label>
+
+        <label class="line-input line-input-phone" for="phoneNumber">
+          <span class="input-icon phone-svg" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M7.1 4.2L9.4 9C9.7 9.7 9.5 10.5 8.9 11L7.6 12C8.8 14.6 10.8 16.6 13.4 17.8L14.4 16.5C14.9 15.9 15.8 15.7 16.5 16L21.2 18.2C22 18.6 22.4 19.5 22.1 20.3C21.5 22 20 23 18.3 22.8C9.1 21.7 2.3 14.9 1.2 5.7C1 4 2 2.5 3.7 1.9C4.5 1.6 5.4 2 5.8 2.8L7.1 4.2Z"></path>
+            </svg>
+          </span>
+          <span class="phone-field-stack">
+            <span class="phone-label">Número de telefone/WhatsApp</span>
+            <span class="phone-field-row">
+              <span class="country-code">BR +55 <em></em></span>
+              <input id="phoneNumber" name="phoneNumber" type="tel" placeholder="" autocomplete="tel" inputmode="numeric" required />
+            </span>
+          </span>
+        </label>
+
+        <section class="pix-method" aria-label="Forma de pagamento selecionada">
+          <span class="pix-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="pix-method-copy">
+            <strong>Pagamento via Pix</strong>
+            <small>Aprovação imediata</small>
+          </span>
+          <span class="selected-check" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 12.4L9.4 16.8L19 7.2"></path></svg>
+          </span>
         </section>
 
-        <section class="transfer-group" aria-label="Resumo da transferência">
-          <h3>Resumo</h3>
+        <button class="generate-btn" id="generatePixBtn" type="submit">GERAR PIX</button>
 
-          <article class="recipient-card">
-            <div class="recipient-avatar">TS</div>
-            <div class="recipient-info">
-              <strong>Taxa de Segurança</strong>
-              <span>Pagamento via Pix • aprovação imediata</span>
-            </div>
-            <div class="recipient-price" id="checkoutAmount">R$ 22,74</div>
-          </article>
-        </section>
-
-        <section class="security-box" aria-label="Pagamento seguro">
-          <div class="security-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5.5 5.8v5.1c0 4.2 2.8 8.1 6.5 9.1 3.7-1 6.5-4.9 6.5-9.1V5.8L12 3Z"/><path d="m9.5 12 1.7 1.7 3.6-4"/></svg>
-          </div>
-          <div>
-            <strong>Pagamento protegido</strong>
-            <p>Seu Pix será gerado com código copia e cola e QR Code.</p>
-          </div>
-        </section>
-
-        <div class="bottom-fade checkout-bottom">
-          <button id="continueBtn" class="primary-button disabled" type="submit" disabled>
-            <span>Continuar</span>
-            <i class="button-loader" aria-hidden="true"></i>
-          </button>
-          <p class="legal-copy">Ao continuar, você concorda com nossos termos de uso e política de privacidade.</p>
-        </div>
+        <p class="terms-text">Ao finalizar o pagamento você concorda com nossos termos de uso e política de privacidade.</p>
       </form>
     </section>
 
-    <section id="pixScreen" class="screen screen-pix" data-screen="pix">
-      <header class="app-header plain">
-        <button id="backToCheckout" class="icon-button back" type="button" aria-label="Voltar">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 4.8 8.3 12l7.2 7.2"/></svg>
+    <section class="screen screen-pix" id="pixScreen" aria-label="Pix gerado">
+      <div class="fake-statusbar" aria-hidden="true">
+        <div class="status-time">15:11</div>
+        <div class="status-icons">
+          <span class="dot-signal">••••</span>
+          <span class="wifi-icon"></span>
+          <span class="battery-icon"></span>
+        </div>
+      </div>
+
+      <header class="minimal-topbar">
+        <button class="back-button" id="backToCheckout" type="button" aria-label="Voltar">
+          <svg viewBox="0 0 24 24"><path d="M15 19L8 12L15 5"></path></svg>
         </button>
       </header>
 
-      <section class="pix-hero" aria-label="Status do pagamento">
-        <div class="pix-illustration" aria-hidden="true">
-          <svg viewBox="0 0 220 220">
-            <ellipse cx="110" cy="113" rx="76" ry="58" fill="#ececef"/>
-            <circle cx="72" cy="59" r="22" fill="#ff9f0a"/>
-            <path d="M72 47v12h10" fill="none" stroke="#111" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>
-            <rect x="87" y="39" width="69" height="104" rx="9" fill="#fff" stroke="#121212" stroke-width="5"/>
-            <path d="M122 77c-6-6-15-6-21 0l5 5c3-3 8-3 11 0l5-5Zm0 0c6-6 15-6 21 0l-5 5c-3-3-8-3-11 0l-5-5Zm0 11c-6 6-15 6-21 0l5-5c3 3 8 3 11 0l5 5Zm0 0c6 6 15 6 21 0l-5-5c-3 3-8 3-11 0l-5 5Z" fill="#19c487"/>
-            <path d="M98 130c-15 5-28 17-32 30M151 101c17 3 33 19 35 39" fill="none" stroke="#111" stroke-width="5" stroke-linecap="round"/>
-            <path d="M79 132c13-14 32-12 46 5l1 51c-15 6-37 1-50-12-10-10-9-31 3-44Z" fill="#f4a2a0"/>
-            <path d="M164 105c-12-10-31-10-44 3l2 78c17 8 41 2 54-14 11-13 3-53-12-67Z" fill="#f4a2a0"/>
-          </svg>
-        </div>
-        <h2 id="pixStatusTitle">Aguardando pagamento</h2>
-        <p id="pixAmount" class="pix-amount">R$22,74</p>
+      <section class="pix-hero">
+        <svg class="pix-illustration" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <ellipse cx="111" cy="112" rx="74" ry="58" fill="#EFEFF3"/>
+          <circle cx="72" cy="55" r="22" fill="#FFA400"/>
+          <path d="M72 42.5V56H84" stroke="#111" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="86" y="39" width="70" height="106" rx="8" fill="#fff"/>
+          <path d="M151 45V139" stroke="#111" stroke-width="5.4" stroke-linecap="round"/>
+          <path d="M94 45H136" stroke="#111" stroke-width="5.4" stroke-linecap="round"/>
+          <path d="M94 139H141" stroke="#111" stroke-width="5.4" stroke-linecap="round"/>
+          <path d="M122 78C116 72 107 72 101 78L106 83C109 80 114 80 117 83L122 78Z" fill="#19C389"/>
+          <path d="M122 78C128 72 137 72 143 78L138 83C135 80 130 80 127 83L122 78Z" fill="#19C389"/>
+          <path d="M122 88C116 94 107 94 101 88L106 83C109 86 114 86 117 83L122 88Z" fill="#19C389"/>
+          <path d="M122 88C128 94 137 94 143 88L138 83C135 86 130 86 127 83L122 88Z" fill="#19C389"/>
+          <path d="M78 132C92 119 109 122 124 138L125 187C109 194 88 189 76 176C66 165 66 144 78 132Z" fill="#F7A6A4"/>
+          <path d="M162 104C149 96 132 96 120 108L122 186C139 193 163 187 176 171C187 158 178 119 162 104Z" fill="#F7A6A4"/>
+          <path d="M98 132C84 138 72 149 68 160" stroke="#111" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+        <h2>Aguardando pagamento</h2>
+        <strong id="pixAmountGenerated">R$32,57</strong>
       </section>
 
-      <section class="timer-card card-99" aria-label="Tempo restante">
-        <div class="card-title-row">
-          <div class="title-left">
-            <span class="clock-badge" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7"/><path d="M12 9v4l3 1.8"/><path d="M8.5 3.5h7"/></svg>
+      <section class="timer-card">
+        <div class="timer-row">
+          <div class="timer-title">
+            <span class="timer-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7"></circle><path d="M12 9V13L15 15"></path><path d="M9 3H15"></path></svg>
             </span>
-            <strong>Tempo restante</strong>
+            <b>Tempo restante</b>
           </div>
-          <span id="countdown" class="countdown">09:52</span>
+          <span class="timer-number" id="countdown">09:52</span>
         </div>
-        <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+        <div class="timer-progress"><span id="progressBar"></span></div>
       </section>
 
-      <section class="pix-code-card card-99" aria-label="Código Pix">
-        <div class="card-title-row">
-          <div class="title-left">
-            <span class="yellow-bullet" aria-hidden="true"><i></i></span>
-            <strong>Código Pix</strong>
-          </div>
-          <button id="howItWorksBtn" class="text-action" type="button">Como funciona <svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
+      <section class="pix-code-card">
+        <div class="card-headline">
+          <div class="headline-left"><span class="yellow-dot"></span><b>Código Pix</b></div>
+          <button class="inline-link" id="howItWorksBtn" type="button">Como funciona <svg viewBox="0 0 24 24"><path d="M9 5L16 12L9 19"></path></svg></button>
         </div>
-
-        <p class="instruction-copy">Copie o código abaixo e utilize o Pix Copia e Cola no aplicativo que você vai fazer o pagamento:</p>
-
+        <p>Copie o código abaixo e utilize o Pix Copia e Cola no aplicativo que você vai fazer o pagamento:</p>
         <div class="copy-code-box">
-          <span id="pixCodePreview">00020101021226900014br.gov.bcb.pix...</span>
-          <button id="copySmallBtn" class="copy-icon" type="button" aria-label="Copiar código Pix">
-            <svg viewBox="0 0 24 24"><rect x="9" y="3" width="11" height="14" rx="2"/><rect x="4" y="8" width="11" height="13" rx="2"/></svg>
+          <span id="pixCodeText">00020101021226900014br.gov.bcb.pix...</span>
+          <button id="copySmallBtn" type="button" aria-label="Copiar código Pix">
+            <svg viewBox="0 0 24 24"><rect x="9" y="3" width="11" height="14" rx="2"></rect><rect x="4" y="8" width="11" height="13" rx="2"></rect></svg>
           </button>
         </div>
       </section>
 
-      <div class="perforation" aria-hidden="true"></div>
+      <div class="dot-separator" aria-hidden="true"></div>
 
-      <section class="qr-entry-card card-99" aria-label="QR Code Pix">
-        <div class="card-title-row no-margin">
-          <div class="title-left">
-            <span class="yellow-bullet" aria-hidden="true"><i></i></span>
-            <strong>QR code do Pix</strong>
-          </div>
-          <button id="openQrBtn" class="text-action" type="button">Ver <svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
+      <section class="qr-row-card">
+        <div class="card-headline no-margin">
+          <div class="headline-left"><span class="yellow-dot"></span><b>QR code do Pix</b></div>
+          <button class="inline-link" id="openQrBtn" type="button">Ver <svg viewBox="0 0 24 24"><path d="M9 5L16 12L9 19"></path></svg></button>
         </div>
       </section>
 
-      <div class="bottom-fade pix-bottom">
-        <button id="copyBigBtn" class="primary-button yellow" type="button">Copiar código</button>
-        <a class="bank-link" href="#" id="bankLink">Acesse o app do banco</a>
-      </div>
+      <section class="pix-bottom-actions">
+        <button class="copy-main" id="copyBigBtn" type="button">Copiar código</button>
+        <a class="bank-access" href="#">Acesse o app do banco</a>
+      </section>
     </section>
 
-    <section id="approvedScreen" class="screen screen-result" data-screen="approved">
-      <header class="app-header plain">
-        <button class="icon-button back" id="finishApproved" type="button" aria-label="Voltar ao início">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 4.8 8.3 12l7.2 7.2"/></svg>
-        </button>
-      </header>
-      <div class="result-content">
-        <div class="success-mark"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.2 4.2L19 7"/></svg></div>
+    <section class="screen screen-approved" id="approvedScreen" aria-label="Pagamento aprovado">
+      <div class="fake-statusbar" aria-hidden="true">
+        <div class="status-time">15:12</div>
+        <div class="status-icons"><span class="dot-signal">••••</span><span class="wifi-icon"></span><span class="battery-icon"></span></div>
+      </div>
+      <div class="approved-center">
+        <div class="approved-badge"><svg viewBox="0 0 24 24"><path d="M5 12.4L9.4 16.8L19 7.2"></path></svg></div>
         <h2>Pagamento aprovado</h2>
-        <p>Recebemos a confirmação do Pix. Você já pode continuar.</p>
-        <button class="primary-button yellow" type="button" id="newPaymentBtn">Fazer novo pagamento</button>
+        <p>Recebemos a confirmação do Pix.</p>
+        <button class="copy-main" id="finishBtn" type="button">Concluir</button>
       </div>
     </section>
   </main>
 
-  <div id="loadingOverlay" class="loading-overlay" aria-hidden="true">
-    <div class="loading-card">
-      <span class="spinner"></span>
-      <strong>Criando cobrança Pix</strong>
-      <p>Aguarde alguns segundos...</p>
-    </div>
-  </div>
-
-  <div id="qrOverlay" class="modal-overlay" aria-hidden="true">
+  <div class="qr-overlay" id="qrOverlay" aria-hidden="true">
     <div class="qr-sheet" role="dialog" aria-modal="true" aria-label="QR Code Pix">
-      <div class="sheet-close-row">
-        <button id="closeQrBtn" class="sheet-close" type="button" aria-label="Fechar QR Code">
-          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
-      </div>
-
+      <button class="close-sheet" id="closeQrBtn" type="button" aria-label="Fechar">
+        <svg viewBox="0 0 24 24"><path d="M18 6L6 18"></path><path d="M6 6L18 18"></path></svg>
+      </button>
       <div class="qr-frame">
         <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
-        <div id="qrcodeCanvas" class="qr-canvas"></div>
-        <div class="qr-center-mark" aria-hidden="true"><span></span></div>
+        <div id="qrcodeModalCanvas"></div>
       </div>
-
       <h3>Use o app do seu banco para escanear o código e pagar</h3>
       <p>Após escanear, permaneça nesta página e aguarde a atualização do resultado</p>
     </div>
   </div>
 
-  <div id="howModal" class="modal-overlay" aria-hidden="true">
-    <div class="info-sheet" role="dialog" aria-modal="true" aria-label="Como pagar com Pix">
-      <div class="sheet-close-row">
-        <button id="closeHowBtn" class="sheet-close" type="button" aria-label="Fechar instruções">
-          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <h3>Como pagar com Pix</h3>
-      <ol>
-        <li>Copie o código Pix ou abra o QR Code.</li>
-        <li>Acesse o app do seu banco.</li>
-        <li>Escolha Pix Copia e Cola ou escaneie o QR Code.</li>
-        <li>Confirme o pagamento e volte para esta tela.</li>
-      </ol>
-    </div>
-  </div>
-
-  <div id="toast" class="toast" role="status">Código copiado</div>
+  <div class="toast" id="toast" role="status" aria-live="polite">Código copiado</div>
 </body>
 </html>

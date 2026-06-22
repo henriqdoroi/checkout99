@@ -1,40 +1,51 @@
-CHECKOUT PIX MOBILE - VERSÃO PROFISSIONAL
+CHECKOUT MOBILE PIX - V2
 
 Arquivos:
 - index.html
 - style.css
 - script.js
 
-Como testar:
-1. Abra index.html no navegador.
-2. Preencha Nome completo e Telefone.
-3. Clique em Continuar.
-4. A tela Pix será aberta com contador, código copia e cola, botão copiar e modal QR Code.
+IMPORTANTE:
+Esta versão foi feita com layout mobile app-style, usando uma marca genérica para você trocar pela sua marca própria.
+Não inclui fonte proprietária. Se você tiver licença da fonte DiDi Sans, coloque os arquivos em /fonts e descomente o @font-face no style.css.
 
-Como ligar sua API real:
-1. Abra script.js
-2. Troque:
-   useMockApi: true
-   para:
-   useMockApi: false
+COMO TESTAR:
+Abra index.html no navegador. Por padrão está em modo simulação.
 
-3. Sua API precisa responder em /api/criar-pix ou altere createPixEndpoint.
+LIGAR API REAL:
+No script.js, troque:
+  useMockApi: true
+para:
+  useMockApi: false
 
-Formato ideal de resposta:
+Endpoint esperado para criar Pix:
+  POST /api/criar-pix
+
+Payload enviado:
+{
+  "nome": "Nome do cliente",
+  "telefone": "(11) 99999-9999",
+  "produto": "Taxa de Segurança",
+  "valor": 32.57
+}
+
+Resposta ideal:
 {
   "sucesso": true,
-  "id": "ID_DA_TRANSACAO",
-  "valor": 22.74,
+  "id": "id_da_transacao",
+  "valor": 32.57,
   "expiresIn": 600,
   "pixCopiaECola": "00020101021226900014br.gov.bcb.pix...",
   "qrCodeText": "00020101021226900014br.gov.bcb.pix...",
   "qrCodeBase64": ""
 }
 
-Status automático:
-- O código já tem polling em /api/status-pix?id=ID_DA_TRANSACAO.
-- A API de status pode retornar status: "paid", "approved", "aprovado" ou "completed" para abrir a tela de aprovado.
+Endpoint opcional de status:
+  GET /api/pix-status?id=ID_DA_TRANSACAO
 
-Fonte:
-- O CSS já está preparado para DiDi Sans.
-- Você precisa adicionar a fonte licenciada em /fonts e descomentar os @font-face no style.css.
+Resposta de status:
+{
+  "status": "approved"
+}
+
+O QR é gerado com a biblioteca qrcodejs via CDN. Se sua API mandar qrCodeBase64, ele usa a imagem retornada pela API.
