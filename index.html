@@ -6,51 +6,58 @@
     name="viewport"
     content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
   />
-  <title>Checkout Pix</title>
+  <title>Transferência Pix</title>
 
   <!-- QR Code -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <style>
-    /* Se você tiver a DiDi Sans, basta subir os arquivos e descomentar
-    @font-face {
-      font-family: "DiDi Sans";
-      src: url("./fonts/DiDiSans-Regular.woff2") format("woff2");
-      font-weight: 400;
-      font-style: normal;
-    }
+    /*
+      Se você tiver a fonte DiDi Sans licenciada, descomente e coloque os arquivos em /fonts
 
-    @font-face {
-      font-family: "DiDi Sans";
-      src: url("./fonts/DiDiSans-Medium.woff2") format("woff2");
-      font-weight: 500;
-      font-style: normal;
-    }
+      @font-face {
+        font-family: "DiDi Sans";
+        src: url("./fonts/DiDiSans-Regular.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+      }
 
-    @font-face {
-      font-family: "DiDi Sans";
-      src: url("./fonts/DiDiSans-Bold.woff2") format("woff2");
-      font-weight: 700 900;
-      font-style: normal;
-    }
+      @font-face {
+        font-family: "DiDi Sans";
+        src: url("./fonts/DiDiSans-Medium.woff2") format("woff2");
+        font-weight: 500;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "DiDi Sans";
+        src: url("./fonts/DiDiSans-Bold.woff2") format("woff2");
+        font-weight: 700 900;
+        font-style: normal;
+      }
     */
 
     :root {
-      --bg: #f5f5f5;
-      --card: #efeff1;
-      --card-2: #ffffff;
+      --bg: #f5f5f6;
+      --surface: #ffffff;
+      --surface-soft: #efeff1;
+      --surface-soft-2: #f8f8f9;
       --text: #111111;
-      --muted: #8f8f95;
-      --line: #e7e7ea;
-      --yellow: #ffd900;
-      --yellow-dark: #f7cf00;
-      --orange: #f58b12;
-      --white: #ffffff;
-      --shadow: 0 2px 10px rgba(0,0,0,.04);
-      --radius-xl: 26px;
-      --radius-lg: 22px;
-      --radius-md: 18px;
-      --radius-sm: 14px;
+      --muted: #8d8d94;
+      --muted-2: #a8a8af;
+      --line: #ececef;
+      --yellow: #ffd800;
+      --yellow-2: #f6d000;
+      --orange: #f28c18;
+      --green: #18c77a;
+      --shadow: 0 4px 16px rgba(17, 17, 17, 0.04);
+      --radius-xs: 12px;
+      --radius-sm: 16px;
+      --radius-md: 20px;
+      --radius-lg: 24px;
+      --radius-xl: 28px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     * {
@@ -63,11 +70,12 @@
       padding: 0;
       background: var(--bg);
       color: var(--text);
-      font-family: "DiDi Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      font-family: "DiDi Sans", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Arial, sans-serif;
     }
 
     body {
       min-height: 100dvh;
+      overflow-x: hidden;
     }
 
     .app {
@@ -77,33 +85,48 @@
       margin: 0 auto;
       background: var(--bg);
       position: relative;
-      overflow-x: hidden;
+      overflow: hidden;
     }
 
     .screen {
       min-height: 100dvh;
-      padding: 22px 18px 28px;
       display: none;
+      padding: calc(14px + var(--safe-top)) 18px calc(24px + var(--safe-bottom));
+      animation: fadeUp .28s ease;
     }
 
     .screen.active {
       display: block;
     }
 
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     .topbar {
-      height: 48px;
+      height: 52px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 8px;
+      justify-content: center;
+      position: relative;
+      margin-bottom: 20px;
     }
 
     .back-btn {
-      width: 36px;
-      height: 36px;
+      position: absolute;
+      left: 0;
+      width: 38px;
+      height: 38px;
       border: 0;
-      background: transparent;
       border-radius: 999px;
+      background: transparent;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -112,278 +135,260 @@
     }
 
     .back-btn svg {
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
       stroke: #111;
-      stroke-width: 2.3;
+      stroke-width: 2.35;
       fill: none;
     }
 
-    .checkout-title {
-      font-size: 20px;
-      font-weight: 800;
-      margin: 10px 0 8px;
-      letter-spacing: -.3px;
-    }
-
-    .checkout-subtitle {
-      font-size: 15px;
-      color: #4b4b52;
-      margin-bottom: 26px;
-      line-height: 1.4;
-    }
-
-    .checkout-card {
-      background: #fff;
-      border-radius: 24px;
-      padding: 18px 16px;
-      box-shadow: var(--shadow);
-      margin-bottom: 14px;
-      border: 1px solid #f0f0f1;
-    }
-
-    .summary-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .summary-row + .summary-row {
-      border-top: 1px solid #ededf0;
-      margin-top: 14px;
-      padding-top: 14px;
-    }
-
-    .product {
-      font-size: 16px;
-      font-weight: 800;
-      letter-spacing: -.2px;
-    }
-
-    .qty {
-      font-size: 14px;
-      color: #7d7d84;
-    }
-
-    .total-label {
-      color: #8f8f95;
-      font-size: 15px;
-    }
-
-    .total-value {
+    .topbar-title {
       font-size: 18px;
-      font-weight: 900;
-      letter-spacing: -.3px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
     }
 
-    .field-block {
-      margin-bottom: 16px;
+    .checkout-hero {
+      margin-top: 8px;
+      margin-bottom: 24px;
+    }
+
+    .checkout-hero h1 {
+      font-size: 31px;
+      line-height: 1.06;
+      margin: 0 0 12px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      max-width: 290px;
+    }
+
+    .checkout-hero p {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.38;
+      color: #2a2a2f;
+      letter-spacing: -0.1px;
+      max-width: 345px;
+    }
+
+    .data-sheet {
+      margin-top: 20px;
+      background: transparent;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .field-row {
+      padding: 18px 0 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .field-row:last-child {
+      border-bottom: 0;
     }
 
     .field-label {
       display: block;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 600;
-      color: #707077;
-      margin-bottom: 8px;
+      color: #6f6f76;
+      margin-bottom: 10px;
+      letter-spacing: -0.1px;
     }
 
-    .field {
-      width: 100%;
-      height: 54px;
-      border-radius: 16px;
-      border: 1px solid #e8e8eb;
-      background: #fff;
-      padding: 0 15px;
-      font-size: 16px;
-      outline: none;
-      color: #111;
-    }
-
-    .field::placeholder {
-      color: #b2b2b8;
-    }
-
-    .phone-wrap {
+    .field-input-wrap {
       display: flex;
+      align-items: center;
       gap: 10px;
     }
 
-    .country {
-      width: 92px;
-      height: 54px;
-      border-radius: 16px;
-      border: 1px solid #e8e8eb;
-      background: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 15px;
-      font-weight: 700;
-      color: #222;
+    .field-input {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      outline: none;
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: -0.25px;
+      padding: 0;
+      min-height: 30px;
+    }
+
+    .field-input::placeholder {
+      color: #bebec5;
+      font-weight: 500;
+    }
+
+    .country-chip {
       flex-shrink: 0;
-    }
-
-    .pay-method {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      border: 1px solid #ececef;
-      border-radius: 18px;
-      padding: 14px 14px;
-      background: #fff;
-    }
-
-    .pay-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .pay-icon {
-      width: 22px;
-      height: 22px;
-      position: relative;
-      transform: rotate(45deg);
-      flex-shrink: 0;
-    }
-
-    .pay-icon span {
-      position: absolute;
-      width: 9px;
-      height: 9px;
-      background: #8b8b92;
-      border-radius: 3px;
-    }
-
-    .pay-icon span:nth-child(1) { left: 0; top: 6px; }
-    .pay-icon span:nth-child(2) { left: 6px; top: 0; }
-    .pay-icon span:nth-child(3) { right: 0; top: 6px; }
-    .pay-icon span:nth-child(4) { left: 6px; bottom: 0; }
-
-    .pay-title {
-      font-size: 16px;
-      font-weight: 800;
-      line-height: 1.15;
-      margin-bottom: 3px;
-    }
-
-    .pay-subtitle {
-      font-size: 13px;
-      color: #8a8a90;
-    }
-
-    .pay-check {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: #14cc3f;
-      color: #fff;
       display: inline-flex;
       align-items: center;
-      justify-content: center;
+      gap: 6px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: #ffffff;
+      border: 1px solid #ebebee;
+      box-shadow: var(--shadow);
       font-size: 14px;
-      font-weight: 900;
-      flex-shrink: 0;
+      font-weight: 700;
+      color: #222;
     }
 
-    .cta {
-      width: 100%;
-      height: 60px;
-      border-radius: 999px;
-      border: 0;
-      background: var(--yellow);
-      color: #111;
-      font-size: 17px;
-      font-weight: 900;
-      letter-spacing: -.2px;
-      cursor: pointer;
-      margin-top: 8px;
-      box-shadow: 0 2px 0 rgba(0,0,0,.04);
+    .quick-summary {
+      margin-top: 28px;
     }
 
-    .cta:disabled {
-      opacity: .65;
-      cursor: not-allowed;
+    .quick-summary-title {
+      font-size: 15px;
+      font-weight: 800;
+      margin: 0 0 12px;
+      letter-spacing: -0.2px;
     }
 
-    .terms {
-      text-align: center;
-      font-size: 12px;
-      line-height: 1.45;
-      color: #7f7f86;
-      margin: 14px auto 0;
-      max-width: 320px;
-    }
-
-    /* PIX SCREEN */
-    .pix-screen {
-      padding-bottom: 32px;
-    }
-
-    .hero {
-      text-align: center;
-      padding: 6px 0 16px;
-    }
-
-    .hero-illustration {
-      width: 170px;
-      height: 170px;
-      margin: 18px auto 8px;
-      display: block;
-    }
-
-    .awaiting-title {
-      font-size: 24px;
-      font-weight: 500;
-      letter-spacing: -.4px;
-      margin: 0 0 10px;
-    }
-
-    .pix-amount {
-      font-size: 40px;
-      font-weight: 900;
-      letter-spacing: -.8px;
-      line-height: 1.05;
-      margin: 0 0 8px;
-    }
-
-    .card {
-      background: var(--card);
-      border-radius: 24px;
-      padding: 18px 16px;
-      margin-top: 14px;
-    }
-
-    .card-header {
+    .summary-card {
+      background: linear-gradient(180deg, #ffffff 0%, #fcfcfc 100%);
+      border: 1px solid #efeff2;
+      border-radius: 22px;
+      padding: 16px 16px;
+      box-shadow: var(--shadow);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 14px;
+      gap: 12px;
     }
 
-    .card-header.left-tight {
-      margin-bottom: 10px;
-    }
-
-    .card-title-wrap {
-      display: flex;
-      align-items: center;
-      gap: 11px;
+    .summary-card-left {
       min-width: 0;
     }
 
-    .card-title {
-      font-size: 18px;
+    .summary-card-title {
+      font-size: 16px;
       font-weight: 800;
-      letter-spacing: -.3px;
-      line-height: 1.1;
+      margin: 0 0 5px;
+      letter-spacing: -0.2px;
     }
 
-    .card-action {
+    .summary-card-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .summary-card-price {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -0.4px;
+      white-space: nowrap;
+    }
+
+    .sticky-bottom {
+      position: sticky;
+      bottom: 0;
+      padding-top: 32px;
+      margin-top: 38px;
+      background: linear-gradient(180deg, rgba(245,245,246,0) 0%, rgba(245,245,246,0.92) 22%, rgba(245,245,246,1) 100%);
+    }
+
+    .continue-btn {
+      width: 100%;
+      height: 62px;
+      border: 0;
+      border-radius: 22px;
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: -0.2px;
+      cursor: pointer;
+      transition: .22s ease;
+    }
+
+    .continue-btn.disabled {
+      background: #ececee;
+      color: #c5c5cb;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .continue-btn.enabled {
+      background: var(--yellow);
+      color: #111;
+      box-shadow: 0 10px 20px rgba(255, 216, 0, 0.18);
+    }
+
+    .security-note {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 12px;
+      color: #8e8e95;
+      line-height: 1.45;
+      padding: 0 10px;
+    }
+
+    /* PIX SCREEN */
+    .pix-hero {
+      text-align: center;
+      padding-top: 4px;
+      margin-bottom: 18px;
+    }
+
+    .pix-hero-illustration {
+      width: 168px;
+      height: 168px;
+      display: block;
+      margin: 10px auto 12px;
+      filter: drop-shadow(0 2px 8px rgba(17,17,17,.04));
+    }
+
+    .pix-status {
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: -0.45px;
+      margin: 0 0 10px;
+    }
+
+    .pix-value {
+      margin: 0;
+      font-size: 38px;
+      line-height: 1.05;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+
+    .soft-card {
+      background: var(--surface-soft);
+      border-radius: 24px;
+      padding: 18px 16px;
+      margin-top: 14px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.36);
+    }
+
+    .soft-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .soft-card-header.no-gap {
+      margin-bottom: 0;
+    }
+
+    .soft-card-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .soft-card-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.35px;
+      line-height: 1.15;
+    }
+
+    .soft-card-action {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -392,12 +397,12 @@
       color: #111;
       font-size: 15px;
       font-weight: 500;
-      padding: 0;
       cursor: pointer;
+      padding: 0;
       flex-shrink: 0;
     }
 
-    .card-action svg {
+    .soft-card-action svg {
       width: 16px;
       height: 16px;
       stroke: #111;
@@ -405,103 +410,102 @@
       fill: none;
     }
 
-    .mini-icon {
-      width: 26px;
-      height: 26px;
+    .mini-round {
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
-      background: rgba(255, 217, 0, .26);
+      background: rgba(255, 216, 0, 0.26);
       display: inline-flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      position: relative;
     }
 
-    .mini-icon .dot-yellow {
-      width: 10px;
-      height: 10px;
-      background: var(--yellow);
+    .mini-round .yellow-dot {
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
+      background: var(--yellow);
     }
 
-    .mini-icon svg {
+    .mini-round svg {
       width: 18px;
       height: 18px;
-      stroke: #202020;
+      stroke: #151515;
       stroke-width: 2.1;
       fill: none;
     }
 
-    .countdown-value {
-      font-size: 19px;
+    .countdown {
+      font-size: 18px;
       font-weight: 600;
-      letter-spacing: -.3px;
       font-variant-numeric: tabular-nums;
+      letter-spacing: -0.2px;
+      white-space: nowrap;
     }
 
     .progress {
       width: 100%;
       height: 7px;
       border-radius: 999px;
-      background: #d7d7db;
+      background: #d8d8dd;
       overflow: hidden;
     }
 
     .progress-bar {
       width: 100%;
       height: 100%;
-      background: var(--yellow-dark);
+      background: var(--yellow-2);
       border-radius: 999px;
       transition: width .35s linear;
     }
 
     .helper-text {
+      margin: 0 0 14px;
       color: var(--muted);
       font-size: 14px;
-      line-height: 1.22;
-      margin: 0 0 14px;
-      letter-spacing: -.1px;
+      line-height: 1.25;
+      letter-spacing: -0.05px;
     }
 
     .pix-code-box {
       min-height: 64px;
-      width: 100%;
-      background: #fff;
+      background: #ffffff;
       border-radius: 18px;
-      padding: 14px 14px;
+      padding: 0 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+      box-shadow: inset 0 0 0 1px rgba(17, 17, 17, 0.02);
     }
 
     .pix-code-text {
       flex: 1;
       min-width: 0;
       font-size: 15px;
-      color: #151515;
-      line-height: 1.25;
+      color: #171717;
+      letter-spacing: -0.1px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      letter-spacing: -.1px;
     }
 
-    .icon-btn {
-      width: 38px;
-      height: 38px;
-      border-radius: 12px;
+    .icon-copy-btn {
+      width: 42px;
+      height: 42px;
       border: 0;
+      border-radius: 12px;
       background: transparent;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      flex-shrink: 0;
       padding: 0;
+      flex-shrink: 0;
     }
 
-    .icon-btn svg {
+    .icon-copy-btn svg {
       width: 28px;
       height: 28px;
       stroke: #111;
@@ -509,59 +513,53 @@
       fill: none;
     }
 
-    .dot-divider {
+    .dotted-divider {
       height: 10px;
       margin: 0 0 2px;
       background-image: radial-gradient(circle, #dadade 1.8px, transparent 1.9px);
       background-size: 14px 10px;
       background-repeat: repeat-x;
       background-position: center;
-      opacity: .95;
+      opacity: 0.95;
     }
 
-    .qr-row-card {
-      margin-top: 0;
-      padding-top: 18px;
-      padding-bottom: 18px;
-    }
-
-    .bottom-actions {
+    .pix-bottom {
       margin-top: 110px;
-      padding: 0 8px;
+      padding: 0 8px 8px;
     }
 
-    .big-copy-btn {
+    .copy-main-btn {
       width: 100%;
       height: 64px;
       border: 0;
       border-radius: 24px;
       background: var(--yellow);
       color: #111;
-      font-size: 19px;
+      font-size: 18px;
       font-weight: 900;
-      letter-spacing: -.2px;
+      letter-spacing: -0.2px;
       cursor: pointer;
+      box-shadow: 0 10px 22px rgba(255, 216, 0, 0.18);
     }
 
     .bank-link {
       display: block;
+      margin-top: 18px;
       text-align: center;
       text-decoration: none;
       color: var(--orange);
-      font-weight: 500;
       font-size: 16px;
-      margin-top: 18px;
-      letter-spacing: -.1px;
+      font-weight: 500;
+      letter-spacing: -0.1px;
     }
 
-    /* MODAL QR */
+    /* QR MODAL */
     .overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,.58);
+      background: rgba(0, 0, 0, 0.58);
       display: none;
       z-index: 50;
-      padding: 0;
     }
 
     .overlay.active {
@@ -575,11 +573,24 @@
       bottom: 0;
       width: 100%;
       max-width: 430px;
-      margin: 0 auto;
-      background: #fff;
-      border-radius: 28px 28px 0 0;
       min-height: 60dvh;
-      padding: 18px 20px 28px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 30px 30px 0 0;
+      padding: 16px 20px calc(26px + var(--safe-bottom));
+      box-shadow: 0 -12px 40px rgba(0,0,0,.12);
+      animation: sheetUp .26s ease;
+    }
+
+    @keyframes sheetUp {
+      from {
+        transform: translateY(24px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
 
     .sheet-close-wrap {
@@ -589,99 +600,124 @@
     }
 
     .sheet-close {
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
       border: 0;
-      border-radius: 50%;
       background: transparent;
-      cursor: pointer;
+      border-radius: 999px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      cursor: pointer;
       padding: 0;
     }
 
     .sheet-close svg {
-      width: 24px;
-      height: 24px;
+      width: 25px;
+      height: 25px;
       stroke: #111;
-      stroke-width: 2.3;
+      stroke-width: 2.35;
       fill: none;
     }
 
     .qr-frame {
       width: 100%;
-      max-width: 290px;
+      max-width: 292px;
       aspect-ratio: 1 / 1;
-      background: #fff;
+      margin: 4px auto 22px;
+      background: #ffffff;
       border-radius: 28px;
-      margin: 6px auto 20px;
-      border: 1px solid #efefef;
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
+      border: 1px solid #f0f0f2;
       padding: 16px;
     }
 
     .corner {
       position: absolute;
-      width: 42px;
-      height: 42px;
-      border-color: #e4e4e7;
+      width: 44px;
+      height: 44px;
+      border-color: #e5e5e9;
       border-style: solid;
+      pointer-events: none;
     }
 
-    .corner.tl { top: 12px; left: 12px; border-width: 4px 0 0 4px; border-top-left-radius: 20px; }
-    .corner.tr { top: 12px; right: 12px; border-width: 4px 4px 0 0; border-top-right-radius: 20px; }
-    .corner.bl { bottom: 12px; left: 12px; border-width: 0 0 4px 4px; border-bottom-left-radius: 20px; }
-    .corner.br { bottom: 12px; right: 12px; border-width: 0 4px 4px 0; border-bottom-right-radius: 20px; }
+    .corner.tl {
+      top: 12px;
+      left: 12px;
+      border-width: 4px 0 0 4px;
+      border-top-left-radius: 18px;
+    }
+
+    .corner.tr {
+      top: 12px;
+      right: 12px;
+      border-width: 4px 4px 0 0;
+      border-top-right-radius: 18px;
+    }
+
+    .corner.bl {
+      bottom: 12px;
+      left: 12px;
+      border-width: 0 0 4px 4px;
+      border-bottom-left-radius: 18px;
+    }
+
+    .corner.br {
+      bottom: 12px;
+      right: 12px;
+      border-width: 0 4px 4px 0;
+      border-bottom-right-radius: 18px;
+    }
 
     #qrcodeModalCanvas,
     #qrcodeModalCanvas img,
     #qrcodeModalCanvas canvas {
       width: 100% !important;
-      max-width: 240px !important;
+      max-width: 238px !important;
       height: auto !important;
       display: block;
       margin: 0 auto;
     }
 
     .sheet-title {
+      margin: 0 auto 12px;
       text-align: center;
       font-size: 21px;
       line-height: 1.18;
       font-weight: 900;
-      letter-spacing: -.4px;
-      margin: 0 auto 10px;
+      letter-spacing: -0.45px;
       max-width: 320px;
     }
 
     .sheet-subtitle {
+      margin: 0 auto;
       text-align: center;
       font-size: 13px;
-      color: #8c8c92;
-      line-height: 1.35;
-      margin: 0 auto;
+      line-height: 1.36;
+      color: var(--muted);
       max-width: 330px;
     }
 
-    .hidden {
-      display: none !important;
-    }
-
-    @media (min-width: 431px) {
-      .overlay {
-        display: none;
+    @media (max-width: 380px) {
+      .checkout-hero h1 {
+        font-size: 28px;
       }
 
-      .overlay.active {
-        display: block;
+      .pix-value {
+        font-size: 35px;
       }
 
-      .sheet {
-        left: 50%;
-        transform: translateX(-50%);
+      .soft-card-title,
+      .summary-card-title {
+        font-size: 17px;
+      }
+
+      .copy-main-btn,
+      .continue-btn {
+        height: 60px;
       }
     }
   </style>
@@ -690,80 +726,86 @@
   <main class="app">
     <!-- CHECKOUT -->
     <section id="checkoutScreen" class="screen active">
-      <div class="topbar">
+      <header class="topbar">
         <button class="back-btn" type="button" aria-label="Voltar">
           <svg viewBox="0 0 24 24">
             <path d="M15 19L8 12L15 5"></path>
           </svg>
         </button>
-      </div>
+        <div class="topbar-title">Transferência Pix</div>
+      </header>
 
-      <h1 class="checkout-title">Checkout Pix</h1>
-      <p class="checkout-subtitle">Preencha seus dados para gerar o Pix.</p>
+      <section class="checkout-hero">
+        <h1>Selecione o destinatário</h1>
+        <p>Preencha seus dados para gerar o Pix com aprovação imediata.</p>
+      </section>
 
-      <div class="checkout-card">
-        <div class="summary-row">
-          <strong class="product">Taxa de Segurança</strong>
-          <span class="qty">1x</span>
+      <section class="data-sheet">
+        <div class="field-row">
+          <label class="field-label" for="fullName">Nome completo</label>
+          <div class="field-input-wrap">
+            <input
+              id="fullName"
+              class="field-input"
+              type="text"
+              placeholder="Nome e sobrenome"
+              autocomplete="name"
+            />
+          </div>
         </div>
-        <div class="summary-row">
-          <span class="total-label">Total</span>
-          <strong class="total-value" id="checkoutTotal">R$ 22,74</strong>
-        </div>
-      </div>
 
-      <div class="checkout-card">
-        <div class="field-block">
-          <label class="field-label" for="name">Nome completo</label>
-          <input id="name" class="field" type="text" placeholder="Nome e sobrenome" />
-        </div>
-
-        <div class="field-block" style="margin-bottom: 0;">
+        <div class="field-row">
           <label class="field-label" for="phone">Telefone / WhatsApp</label>
-          <div class="phone-wrap">
-            <div class="country">BR +55</div>
-            <input id="phone" class="field" type="tel" placeholder="(11) 99999-9999" />
+          <div class="field-input-wrap">
+            <div class="country-chip">BR +55</div>
+            <input
+              id="phone"
+              class="field-input"
+              type="tel"
+              placeholder="(11) 99999-9999"
+              autocomplete="tel"
+              inputmode="numeric"
+            />
           </div>
         </div>
-      </div>
+      </section>
 
-      <div class="checkout-card">
-        <div class="pay-method">
-          <div class="pay-left">
-            <div class="pay-icon" aria-hidden="true">
-              <span></span><span></span><span></span><span></span>
-            </div>
+      <section class="quick-summary">
+        <h2 class="quick-summary-title">Resumo</h2>
 
-            <div>
-              <div class="pay-title">Pagamento via Pix</div>
-              <div class="pay-subtitle">Aprovação imediata.</div>
-            </div>
+        <div class="summary-card">
+          <div class="summary-card-left">
+            <p class="summary-card-title">Taxa de Segurança</p>
+            <p class="summary-card-subtitle">Pagamento via Pix • aprovação imediata</p>
           </div>
 
-          <div class="pay-check">✓</div>
+          <div class="summary-card-price" id="checkoutValue">R$ 22,74</div>
         </div>
+      </section>
+
+      <div class="sticky-bottom">
+        <button id="continueBtn" class="continue-btn disabled" type="button" disabled>
+          Continuar
+        </button>
+
+        <p class="security-note">
+          Ao continuar, você concorda com nossos termos de uso e política de privacidade.
+        </p>
       </div>
-
-      <button id="generatePixBtn" class="cta" type="button">Gerar Pix</button>
-
-      <p class="terms">
-        Ao finalizar o pagamento você concorda com nossos termos de uso e política de privacidade.
-      </p>
     </section>
 
-    <!-- PIX GENERATED -->
-    <section id="pixScreen" class="screen pix-screen">
-      <div class="topbar">
-        <button class="back-btn" id="backToCheckout" type="button" aria-label="Voltar">
+    <!-- PIX SCREEN -->
+    <section id="pixScreen" class="screen">
+      <header class="topbar">
+        <button id="backToCheckout" class="back-btn" type="button" aria-label="Voltar">
           <svg viewBox="0 0 24 24">
             <path d="M15 19L8 12L15 5"></path>
           </svg>
         </button>
-      </div>
+      </header>
 
-      <section class="hero">
-        <!-- ilustração inline -->
-        <svg class="hero-illustration" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <section class="pix-hero">
+        <svg class="pix-hero-illustration" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <ellipse cx="110" cy="112" rx="78" ry="58" fill="#EBEBEE"/>
           <circle cx="72" cy="58" r="22" fill="#FFA400"/>
           <path d="M72 46V58H82" stroke="#121212" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -779,24 +821,24 @@
           <path d="M164 105C152 95 133 95 120 108L122 186C139 194 163 188 176 172C187 159 179 119 164 105Z" fill="#F5A3A2"/>
         </svg>
 
-        <h2 class="awaiting-title">Aguardando pagamento</h2>
-        <p class="pix-amount" id="pixAmount">R$22,74</p>
+        <h2 class="pix-status">Aguardando pagamento</h2>
+        <p class="pix-value" id="pixValue">R$22,74</p>
       </section>
 
-      <section class="card">
-        <div class="card-header left-tight">
-          <div class="card-title-wrap">
-            <div class="mini-icon">
+      <section class="soft-card">
+        <div class="soft-card-header">
+          <div class="soft-card-title-wrap">
+            <div class="mini-round">
               <svg viewBox="0 0 24 24">
                 <circle cx="12" cy="13" r="7"></circle>
                 <path d="M12 9V13L14.8 14.8"></path>
                 <path d="M9 3H15"></path>
               </svg>
             </div>
-            <div class="card-title">Tempo restante</div>
+            <div class="soft-card-title">Tempo restante</div>
           </div>
 
-          <div id="countdown" class="countdown-value">09:52</div>
+          <div id="countdown" class="countdown">09:52</div>
         </div>
 
         <div class="progress">
@@ -804,16 +846,16 @@
         </div>
       </section>
 
-      <section class="card">
-        <div class="card-header">
-          <div class="card-title-wrap">
-            <div class="mini-icon">
-              <div class="dot-yellow"></div>
+      <section class="soft-card">
+        <div class="soft-card-header">
+          <div class="soft-card-title-wrap">
+            <div class="mini-round">
+              <div class="yellow-dot"></div>
             </div>
-            <div class="card-title">Código Pix</div>
+            <div class="soft-card-title">Código Pix</div>
           </div>
 
-          <button id="howItWorksBtn" class="card-action" type="button">
+          <button id="howItWorksBtn" class="soft-card-action" type="button">
             Como funciona
             <svg viewBox="0 0 24 24">
               <path d="M9 5L16 12L9 19"></path>
@@ -830,7 +872,7 @@
             00020101021226900014br.gov.bcb.pix...
           </div>
 
-          <button id="copyCodeIconBtn" class="icon-btn" type="button" aria-label="Copiar código Pix">
+          <button id="copySmallBtn" class="icon-copy-btn" type="button" aria-label="Copiar código Pix">
             <svg viewBox="0 0 24 24">
               <rect x="9" y="3" width="11" height="14" rx="2"></rect>
               <rect x="4" y="8" width="11" height="13" rx="2"></rect>
@@ -839,18 +881,18 @@
         </div>
       </section>
 
-      <div class="dot-divider"></div>
+      <div class="dotted-divider"></div>
 
-      <section class="card qr-row-card">
-        <div class="card-header" style="margin-bottom:0;">
-          <div class="card-title-wrap">
-            <div class="mini-icon">
-              <div class="dot-yellow"></div>
+      <section class="soft-card">
+        <div class="soft-card-header no-gap">
+          <div class="soft-card-title-wrap">
+            <div class="mini-round">
+              <div class="yellow-dot"></div>
             </div>
-            <div class="card-title">QR code do Pix</div>
+            <div class="soft-card-title">QR code do Pix</div>
           </div>
 
-          <button id="openQrBtn" class="card-action" type="button">
+          <button id="openQrBtn" class="soft-card-action" type="button">
             Ver
             <svg viewBox="0 0 24 24">
               <path d="M9 5L16 12L9 19"></path>
@@ -859,8 +901,11 @@
         </div>
       </section>
 
-      <div class="bottom-actions">
-        <button id="copyBigBtn" class="big-copy-btn" type="button">Copiar código</button>
+      <div class="pix-bottom">
+        <button id="copyBigBtn" class="copy-main-btn" type="button">
+          Copiar código
+        </button>
+
         <a href="#" class="bank-link">Acesse o app do banco</a>
       </div>
     </section>
@@ -886,10 +931,7 @@
         <div id="qrcodeModalCanvas"></div>
       </div>
 
-      <h3 class="sheet-title">
-        Use o app do seu banco para escanear o código e pagar
-      </h3>
-
+      <h3 class="sheet-title">Use o app do seu banco para escanear o código e pagar</h3>
       <p class="sheet-subtitle">
         Após escanear, permaneça nesta página e aguarde a atualização do resultado
       </p>
@@ -897,39 +939,43 @@
   </div>
 
   <script>
-    /****************************************************************
+    /********************************************************
      * CONFIG
-     ****************************************************************/
-    const USE_MOCK_API = true; // troque para false quando ligar sua API real
+     ********************************************************/
+    const USE_MOCK_API = true; // false = usa sua API real em /api/criar-pix
 
     const checkoutScreen = document.getElementById("checkoutScreen");
     const pixScreen = document.getElementById("pixScreen");
-    const generatePixBtn = document.getElementById("generatePixBtn");
-    const backToCheckout = document.getElementById("backToCheckout");
 
-    const pixAmountEl = document.getElementById("pixAmount");
-    const checkoutTotalEl = document.getElementById("checkoutTotal");
+    const fullNameInput = document.getElementById("fullName");
+    const phoneInput = document.getElementById("phone");
+    const continueBtn = document.getElementById("continueBtn");
+
+    const checkoutValueEl = document.getElementById("checkoutValue");
+    const pixValueEl = document.getElementById("pixValue");
     const pixCodeTextEl = document.getElementById("pixCodeText");
     const countdownEl = document.getElementById("countdown");
     const progressBarEl = document.getElementById("progressBar");
 
-    const copyCodeIconBtn = document.getElementById("copyCodeIconBtn");
+    const backToCheckoutBtn = document.getElementById("backToCheckout");
+    const howItWorksBtn = document.getElementById("howItWorksBtn");
+    const copySmallBtn = document.getElementById("copySmallBtn");
     const copyBigBtn = document.getElementById("copyBigBtn");
     const openQrBtn = document.getElementById("openQrBtn");
     const closeQrBtn = document.getElementById("closeQrBtn");
     const qrOverlay = document.getElementById("qrOverlay");
     const qrcodeModalCanvas = document.getElementById("qrcodeModalCanvas");
-    const howItWorksBtn = document.getElementById("howItWorksBtn");
 
-    let countdownInterval = null;
     let totalSeconds = 600;
     let remainingSeconds = 600;
+    let timerInterval = null;
     let currentPixCode = "";
     let currentQrBase64 = "";
+    let currentAmount = 22.74;
 
-    /****************************************************************
+    /********************************************************
      * HELPERS
-     ****************************************************************/
+     ********************************************************/
     function formatBRL(value) {
       return new Intl.NumberFormat("pt-BR", {
         style: "currency",
@@ -937,21 +983,51 @@
       }).format(Number(value || 0));
     }
 
-    function formatTimer(seconds) {
-      const mins = Math.floor(seconds / 60);
-      const secs = seconds % 60;
-      return String(mins).padStart(2, "0") + ":" + String(secs).padStart(2, "0");
+    function formatBRLCompact(value) {
+      return formatBRL(value).replace(/\s/g, "");
     }
 
-    function showScreen(screenName) {
+    function showScreen(screen) {
       checkoutScreen.classList.remove("active");
       pixScreen.classList.remove("active");
 
-      if (screenName === "checkout") checkoutScreen.classList.add("active");
-      if (screenName === "pix") pixScreen.classList.add("active");
+      if (screen === "checkout") {
+        checkoutScreen.classList.add("active");
+      }
+
+      if (screen === "pix") {
+        pixScreen.classList.add("active");
+      }
     }
 
-    function truncatePixCode(code) {
+    function validateFields() {
+      const name = fullNameInput.value.trim();
+      const phoneDigits = phoneInput.value.replace(/\D/g, "");
+
+      const valid = name.length >= 3 && phoneDigits.length >= 10;
+
+      continueBtn.disabled = !valid;
+      continueBtn.classList.toggle("enabled", valid);
+      continueBtn.classList.toggle("disabled", !valid);
+    }
+
+    function maskPhone(value) {
+      const digits = value.replace(/\D/g, "").slice(0, 11);
+
+      if (digits.length <= 10) {
+        return digits
+          .replace(/^(\d{0,2})/, "($1")
+          .replace(/^\((\d{2})(\d)/, "($1) $2")
+          .replace(/(\d{4})(\d)/, "$1-$2");
+      }
+
+      return digits
+        .replace(/^(\d{0,2})/, "($1")
+        .replace(/^\((\d{2})(\d)/, "($1) $2")
+        .replace(/(\d{5})(\d)/, "$1-$2");
+    }
+
+    function truncateCode(code) {
       if (!code) return "";
       return code.length > 46 ? code.slice(0, 46) + "..." : code;
     }
@@ -960,7 +1036,7 @@
       try {
         await navigator.clipboard.writeText(text);
         return true;
-      } catch {
+      } catch (error) {
         const textarea = document.createElement("textarea");
         textarea.value = text;
         document.body.appendChild(textarea);
@@ -972,34 +1048,38 @@
     }
 
     function startCountdown(seconds) {
-      clearInterval(countdownInterval);
+      clearInterval(timerInterval);
 
       totalSeconds = seconds;
       remainingSeconds = seconds;
+      updateCountdown();
 
-      updateCountdownUI();
-
-      countdownInterval = setInterval(() => {
+      timerInterval = setInterval(() => {
         remainingSeconds--;
 
         if (remainingSeconds <= 0) {
           remainingSeconds = 0;
-          updateCountdownUI();
-          clearInterval(countdownInterval);
+          updateCountdown();
+          clearInterval(timerInterval);
           return;
         }
 
-        updateCountdownUI();
+        updateCountdown();
       }, 1000);
     }
 
-    function updateCountdownUI() {
-      countdownEl.textContent = formatTimer(remainingSeconds);
+    function updateCountdown() {
+      const min = Math.floor(remainingSeconds / 60);
+      const sec = remainingSeconds % 60;
+
+      countdownEl.textContent =
+        String(min).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
+
       const percent = (remainingSeconds / totalSeconds) * 100;
       progressBarEl.style.width = percent + "%";
     }
 
-    function renderQrCode() {
+    function renderQr() {
       qrcodeModalCanvas.innerHTML = "";
 
       if (currentQrBase64) {
@@ -1014,8 +1094,8 @@
 
       new QRCode(qrcodeModalCanvas, {
         text: currentPixCode,
-        width: 240,
-        height: 240,
+        width: 238,
+        height: 238,
         colorDark: "#000000",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.M
@@ -1023,7 +1103,7 @@
     }
 
     function openQrModal() {
-      renderQrCode();
+      renderQr();
       qrOverlay.classList.add("active");
       document.body.style.overflow = "hidden";
     }
@@ -1034,42 +1114,42 @@
     }
 
     function fillPixScreen(data) {
-      const amount = Number(data.valor || 22.74);
+      currentAmount = Number(data.valor || 22.74);
       currentPixCode = data.pixCopiaECola || data.qrCodeText || "";
       currentQrBase64 = data.qrCodeBase64 || "";
 
-      pixAmountEl.textContent = formatBRL(amount).replace(/\s/g, "");
-      checkoutTotalEl.textContent = formatBRL(amount);
-      pixCodeTextEl.textContent = truncatePixCode(currentPixCode);
+      checkoutValueEl.textContent = formatBRL(currentAmount);
+      pixValueEl.textContent = formatBRLCompact(currentAmount);
+      pixCodeTextEl.textContent = truncateCode(currentPixCode);
 
-      const expiresIn = Number(data.expiresIn || 600);
-      startCountdown(expiresIn);
-
+      startCountdown(Number(data.expiresIn || 600));
       showScreen("pix");
     }
 
-    /****************************************************************
+    /********************************************************
      * API
-     ****************************************************************/
-    async function createPixPayload() {
-      const name = document.getElementById("name").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-
-      if (!name) {
-        alert("Preencha o nome completo.");
-        return null;
-      }
-
-      if (!phone) {
-        alert("Preencha o telefone / WhatsApp.");
-        return null;
-      }
-
+     ********************************************************/
+    async function createPayload() {
       return {
-        nome: name,
-        telefone: phone,
+        nome: fullNameInput.value.trim(),
+        telefone: phoneInput.value.trim(),
         produto: "Taxa de Segurança",
         valor: 22.74
+      };
+    }
+
+    async function createPixMock(payload) {
+      await new Promise(resolve => setTimeout(resolve, 900));
+
+      return {
+        sucesso: true,
+        valor: payload.valor,
+        expiresIn: 592,
+        pixCopiaECola:
+          "00020101021226900014br.gov.bcb.pix2571pix.exemplo.com/qr/v2/cob/98f7f2e2c0c34f8d8d0aa41a8d9a52035204000053039865802BR5925EMPRESA EXEMPLO LTDA6009SAO PAULO62070503***6304A1B2",
+        qrCodeText:
+          "00020101021226900014br.gov.bcb.pix2571pix.exemplo.com/qr/v2/cob/98f7f2e2c0c34f8d8d0aa41a8d9a52035204000053039865802BR5925EMPRESA EXEMPLO LTDA6009SAO PAULO62070503***6304A1B2",
+        qrCodeBase64: ""
       };
     }
 
@@ -1091,31 +1171,25 @@
       return data;
     }
 
-    async function createPixMock(payload) {
-      await new Promise(resolve => setTimeout(resolve, 900));
-
-      return {
-        sucesso: true,
-        valor: payload.valor,
-        expiresIn: 592,
-        pixCopiaECola:
-          "00020101021226900014br.gov.bcb.pix2571pix.exemplo.com/qr/v2/cob/98f7f2e2c0c34f8d8d0aa41a8d9a52035204000053039865802BR5925EMPRESA EXEMPLO LTDA6009SAO PAULO62070503***6304A1B2",
-        qrCodeText:
-          "00020101021226900014br.gov.bcb.pix2571pix.exemplo.com/qr/v2/cob/98f7f2e2c0c34f8d8d0aa41a8d9a52035204000053039865802BR5925EMPRESA EXEMPLO LTDA6009SAO PAULO62070503***6304A1B2"
-      };
-    }
-
-    /****************************************************************
+    /********************************************************
      * EVENTS
-     ****************************************************************/
-    generatePixBtn.addEventListener("click", async () => {
-      const payload = await createPixPayload();
-      if (!payload) return;
+     ********************************************************/
+    fullNameInput.addEventListener("input", validateFields);
 
-      generatePixBtn.disabled = true;
-      generatePixBtn.textContent = "Gerando Pix...";
+    phoneInput.addEventListener("input", (e) => {
+      e.target.value = maskPhone(e.target.value);
+      validateFields();
+    });
+
+    continueBtn.addEventListener("click", async () => {
+      if (continueBtn.disabled) return;
+
+      continueBtn.disabled = true;
+      continueBtn.textContent = "Gerando Pix...";
 
       try {
+        const payload = await createPayload();
+
         const data = USE_MOCK_API
           ? await createPixMock(payload)
           : await createPixReal(payload);
@@ -1125,34 +1199,44 @@
         console.error(error);
         alert("Não foi possível gerar o Pix.");
       } finally {
-        generatePixBtn.disabled = false;
-        generatePixBtn.textContent = "Gerar Pix";
+        continueBtn.textContent = "Continuar";
+        validateFields();
       }
     });
 
-    backToCheckout.addEventListener("click", () => {
-      clearInterval(countdownInterval);
+    backToCheckoutBtn.addEventListener("click", () => {
+      clearInterval(timerInterval);
       showScreen("checkout");
     });
 
-    copyCodeIconBtn.addEventListener("click", async () => {
+    copySmallBtn.addEventListener("click", async () => {
       if (!currentPixCode) return;
+
       await copyText(currentPixCode);
-      const old = copyCodeIconBtn.innerHTML;
-      copyCodeIconBtn.innerHTML = "✓";
+
+      const old = copySmallBtn.innerHTML;
+      copySmallBtn.innerHTML = "✓";
+
       setTimeout(() => {
-        copyCodeIconBtn.innerHTML = old;
+        copySmallBtn.innerHTML = old;
       }, 1200);
     });
 
     copyBigBtn.addEventListener("click", async () => {
       if (!currentPixCode) return;
+
       await copyText(currentPixCode);
-      const old = copyBigBtn.textContent;
+
+      const oldText = copyBigBtn.textContent;
       copyBigBtn.textContent = "Código copiado";
+
       setTimeout(() => {
-        copyBigBtn.textContent = old;
+        copyBigBtn.textContent = oldText;
       }, 1400);
+    });
+
+    howItWorksBtn.addEventListener("click", () => {
+      alert("Copie o código Pix e cole no app do seu banco, ou toque em 'Ver' para abrir o QR code.");
     });
 
     openQrBtn.addEventListener("click", openQrModal);
@@ -1162,9 +1246,7 @@
       if (e.target === qrOverlay) closeQrModal();
     });
 
-    howItWorksBtn.addEventListener("click", () => {
-      alert("Copie o código Pix e cole no app do seu banco, ou toque em 'Ver' para abrir o QR code.");
-    });
+    validateFields();
   </script>
 </body>
 </html>
