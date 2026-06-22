@@ -48,11 +48,8 @@
 
       <form id="checkoutForm" class="form" autocomplete="on">
         <label class="field field--single">
-          <span class="field__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="7.2" r="4.2"></circle>
-              <path d="M4.5 21C4.5 16.7 7.8 13.7 12 13.7C16.2 13.7 19.5 16.7 19.5 21"></path>
-            </svg>
+          <span class="field__icon field__icon--person" aria-hidden="true">
+            <img src="./assets/99person-icon.svg" alt="" />
           </span>
           <input id="fullName" name="fullName" type="text" placeholder="Nome completo" autocomplete="name" required />
         </label>
@@ -73,7 +70,9 @@
         </label>
 
         <section class="pix-method" aria-label="Forma de pagamento">
-          <span class="pix-method__icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="pix-method__icon pix-method__icon--img" aria-hidden="true">
+            <img src="./assets/pix.svg" alt="" />
+          </span>
           <div class="pix-method__copy">
             <strong>Pagamento via Pix</strong>
             <small>Aprovação imediata</small>
@@ -97,22 +96,26 @@
       </header>
 
       <section class="pix-hero">
-        <svg class="pix-hero__art" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <ellipse cx="110" cy="112" rx="76" ry="58" fill="#ECECEF"/>
-          <circle cx="73" cy="56" r="20" fill="#FFA400"/>
-          <path d="M73 44V56H83" stroke="#111111" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
-          <rect x="88" y="40" width="68" height="104" rx="8" fill="#FFFFFF"/>
-          <path d="M150 46V139" stroke="#111111" stroke-width="5" stroke-linecap="round"/>
-          <path d="M96 46H136" stroke="#111111" stroke-width="5" stroke-linecap="round"/>
-          <path d="M97 138H140" stroke="#111111" stroke-width="5" stroke-linecap="round"/>
-          <path d="M122 78C116 72 107 72 101 78L106 83C109 80 114 80 117 83L122 78Z" fill="#1BC784"/>
-          <path d="M122 78C128 72 137 72 143 78L138 83C135 80 130 80 127 83L122 78Z" fill="#1BC784"/>
-          <path d="M122 88C116 94 107 94 101 88L106 83C109 86 114 86 117 83L122 88Z" fill="#1BC784"/>
-          <path d="M122 88C128 94 137 94 143 88L138 83C135 86 130 86 127 83L122 88Z" fill="#1BC784"/>
-          <path d="M79 132C92 119 109 121 124 137L125 187C109 194 89 190 76 176C66 166 67 145 79 132Z" fill="#F6A3A1"/>
-          <path d="M162 104C150 95 133 95 121 107L122 185C139 193 163 187 176 171C187 158 178 119 162 104Z" fill="#F6A3A1"/>
-          <path d="M99 132C85 138 73 149 69 160" stroke="#111111" stroke-width="5" stroke-linecap="round"/>
-        </svg>
+        <!-- Troque o src abaixo para o GIF/PNG que você quiser mostrar acima de “Aguardando pagamento”. -->
+        <div class="pix-media">
+          <img class="pix-media__img" src="./assets/pix-gerado.gif" alt="Pix gerado" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
+          <svg class="pix-media__fallback" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <ellipse cx="110" cy="112" rx="76" ry="58" fill="#ECECEF"/>
+            <circle cx="73" cy="56" r="20" fill="#FFA400"/>
+            <path d="M73 44V56H83" stroke="#111111" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="88" y="40" width="68" height="104" rx="8" fill="#FFFFFF"/>
+            <path d="M150 46V139" stroke="#111111" stroke-width="5" stroke-linecap="round"/>
+            <path d="M96 46H136" stroke="#111111" stroke-width="5" stroke-linecap="round"/>
+            <path d="M97 138H140" stroke="#111111" stroke-width="5" stroke-linecap="round"/>
+            <path d="M122 78C116 72 107 72 101 78L106 83C109 80 114 80 117 83L122 78Z" fill="#1BC784"/>
+            <path d="M122 78C128 72 137 72 143 78L138 83C135 80 130 80 127 83L122 78Z" fill="#1BC784"/>
+            <path d="M122 88C116 94 107 94 101 88L106 83C109 86 114 86 117 83L122 88Z" fill="#1BC784"/>
+            <path d="M122 88C128 94 137 94 143 88L138 83C135 86 130 86 127 83L122 88Z" fill="#1BC784"/>
+            <path d="M79 132C92 119 109 121 124 137L125 187C109 194 89 190 76 176C66 166 67 145 79 132Z" fill="#F6A3A1"/>
+            <path d="M162 104C150 95 133 95 121 107L122 185C139 193 163 187 176 171C187 158 178 119 162 104Z" fill="#F6A3A1"/>
+            <path d="M99 132C85 138 73 149 69 160" stroke="#111111" stroke-width="5" stroke-linecap="round"/>
+          </svg>
+        </div>
         <h2>Aguardando pagamento</h2>
         <strong id="pixAmountGenerated">R$32,57</strong>
       </section>
@@ -158,6 +161,12 @@
           <button class="inline-link" id="openQrBtn" type="button">Ver <svg viewBox="0 0 24 24"><path d="M9 5L16 12L9 19"></path></svg></button>
         </div>
       </section>
+
+      <section class="actions-bottom">
+        <button class="primary-btn primary-btn--solid" id="copyBigBtn" type="button">Copiar código</button>
+        <a class="bank-link" href="#">Acesse o app do banco</a>
+      </section>
+    </section>
 
     <!-- APPROVED -->
     <section class="screen screen-approved" id="approvedScreen" aria-label="Pagamento aprovado">

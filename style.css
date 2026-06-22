@@ -648,3 +648,82 @@ svg { display: block; }
   .summary-line strong, .summary-line span { font-size: 17px; }
   .pix-hero strong { font-size: 30px; }
 }
+
+/* ===== AJUSTES DE ÍCONES, PIX MEDIA E BOTÃO COPIAR ===== */
+.field__icon img,
+.pix-method__icon img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.field__icon--person {
+  color: initial;
+}
+
+.field--phone {
+  align-items: center;
+}
+
+.field--phone .field__icon {
+  margin-top: 0;
+  transform: translateY(1px);
+}
+
+.pix-method__icon--img {
+  transform: none;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+}
+
+.pix-method__icon--img i {
+  display: none;
+}
+
+.pix-method__check svg {
+  stroke: #111111;
+}
+
+.pix-media {
+  width: 132px;
+  height: 132px;
+  margin: 8px auto 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pix-media__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.pix-media__fallback {
+  width: 128px;
+  height: 128px;
+  display: none;
+  filter: drop-shadow(0 3px 8px rgba(17,17,17,.04));
+}
+
+.actions-bottom {
+  margin-top: 88px;
+  padding: 0 4px calc(20px + var(--safe-bottom));
+}
+
+.actions-bottom .primary-btn {
+  margin-top: 0;
+}
+
+.bank-link {
+  display: block;
+  margin-top: 16px;
+  text-align: center;
+  text-decoration: none;
+  color: var(--orange);
+  font-size: 15px;
+  font-weight: 500;
+}
