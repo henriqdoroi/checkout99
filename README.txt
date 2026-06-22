@@ -1,51 +1,49 @@
-CHECKOUT MOBILE PIX - V2
+CHECKOUT MOBILE CLEAN V3
 
 Arquivos:
 - index.html
 - style.css
 - script.js
 
-IMPORTANTE:
-Esta versão foi feita com layout mobile app-style, usando uma marca genérica para você trocar pela sua marca própria.
-Não inclui fonte proprietária. Se você tiver licença da fonte DiDi Sans, coloque os arquivos em /fonts e descomente o @font-face no style.css.
+VISUAL
+- Layout mobile-first mais limpo, delicado e com cara de app.
+- Slot de banner no topo: troque o arquivo banner-placeholder.png pelo seu banner.
+- Caso o banner não exista, entra um fallback visual automático.
+- CSS preparado para usar a fonte DiDi Sans, se você tiver a fonte licenciada.
 
-COMO TESTAR:
-Abra index.html no navegador. Por padrão está em modo simulação.
+COMO TROCAR O BANNER
+1. Coloque sua imagem na mesma pasta do projeto.
+2. Use o nome: banner-placeholder.png
+ou troque no HTML a linha:
+   src="banner-placeholder.png"
 
-LIGAR API REAL:
+COMO LIGAR SUA API REAL
 No script.js, troque:
   useMockApi: true
 para:
   useMockApi: false
 
-Endpoint esperado para criar Pix:
-  POST /api/criar-pix
+ROTA PARA GERAR PIX
+- /api/criar-pix
 
-Payload enviado:
-{
-  "nome": "Nome do cliente",
-  "telefone": "(11) 99999-9999",
-  "produto": "Taxa de Segurança",
-  "valor": 32.57
-}
+ROTA PARA CONSULTAR STATUS
+- /api/pix-status?id=ID_DA_TRANSACAO
 
-Resposta ideal:
+FORMATO IDEAL DE RESPOSTA AO GERAR PIX
 {
   "sucesso": true,
-  "id": "id_da_transacao",
+  "id": "tx_123",
   "valor": 32.57,
   "expiresIn": 600,
-  "pixCopiaECola": "00020101021226900014br.gov.bcb.pix...",
-  "qrCodeText": "00020101021226900014br.gov.bcb.pix...",
+  "pixCopiaECola": "000201010212...",
+  "qrCodeText": "000201010212...",
   "qrCodeBase64": ""
 }
 
-Endpoint opcional de status:
-  GET /api/pix-status?id=ID_DA_TRANSACAO
-
-Resposta de status:
+FORMATO IDEAL DE STATUS
 {
   "status": "approved"
 }
 
-O QR é gerado com a biblioteca qrcodejs via CDN. Se sua API mandar qrCodeBase64, ele usa a imagem retornada pela API.
+OBSERVAÇÃO
+Este layout foi refinado para ficar com aparência clean e de app mobile, sem copiar a identidade exata de um app financeiro oficial.
