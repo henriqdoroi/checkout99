@@ -13,7 +13,7 @@ const CONFIG = {
   createPixEndpoint: "/api/criar-pix",
   statusEndpoint: "/api/pix-status",
 
-  // Polling obrigatório a cada 3s conforme solicitado.
+  // Polling a cada 3s.
   pollingEveryMs: 3000,
 
   // Redirecionamento imediato após status PAID.
@@ -35,9 +35,7 @@ const els = {
   app: $("#app"),
   form: $("#checkoutForm"),
   fullName: $("#fullName"),
-  email: $("#email"),
   phone: $("#phoneNumber"),
-  cpf: $("#cpf"),
   generate: $("#generatePixBtn"),
   productName: $("#productName"),
   checkoutAmount: $("#checkoutAmount"),
@@ -88,9 +86,7 @@ function init() {
   validateCheckout();
 
   els.fullName.addEventListener("input", validateCheckout);
-  els.email.addEventListener("input", validateCheckout);
   els.phone.addEventListener("input", handlePhoneInput);
-  els.cpf.addEventListener("input", handleCpfInput);
 
   els.form.addEventListener("submit", handleCreatePix);
   els.backToCheckout.addEventListener("click", backToCheckout);
@@ -126,23 +122,10 @@ function handlePhoneInput(event) {
   validateCheckout();
 }
 
-function handleCpfInput(event) {
-  event.target.value = maskCpf(event.target.value);
-  validateCheckout();
-}
-
 function validateCheckout() {
   const name = els.fullName.value.trim();
-  const email = els.email.value.trim();
   const phoneDigits = onlyDigits(els.phone.value);
-  const cpfDigits = onlyDigits(els.cpf.value);
-
-  const valid =
-    name.length >= 3 &&
-    isValidEmail(email) &&
-    phoneDigits.length >= 10 &&
-    isValidCpf(cpfDigits);
-
+  const valid = name.length >= 3 && phoneDigits.length >= 10;
   els.generate.disabled = !valid;
 }
 
@@ -171,19 +154,11 @@ async function handleCreatePix(event) {
 
 function buildPayload() {
   const nome = els.fullName.value.trim();
-  const email = els.email.value.trim();
   const telefone = els.phone.value.trim();
-  const cpf = els.cpf.value.trim();
   const phoneDigits = onlyDigits(telefone);
-  const cpfDigits = onlyDigits(cpf);
 
   if (nome.length < 3) {
     showToast("Preencha o nome completo");
-    return null;
-  }
-
-  if (!isValidEmail(email)) {
-    showToast("Preencha um e-mail válido");
     return null;
   }
 
@@ -192,16 +167,9 @@ function buildPayload() {
     return null;
   }
 
-  if (!isValidCpf(cpfDigits)) {
-    showToast("Preencha um CPF válido");
-    return null;
-  }
-
   return {
     nome,
-    email,
     telefone,
-    cpf,
     produto: CONFIG.productName,
     valor: CONFIG.amount,
     product_id: CONFIG.productId || undefined,
@@ -248,9 +216,7 @@ function fillPixData(data) {
     createdAt: Date.now()
   };
 
-  if (!currentPix.code) {
-    throw new Error("A API não retornou o código Pix copia e cola.");
-  }
+  if (!currentPix.code) throw new Error("A API não retornou o código Pix copia e cola.");
 
   els.checkoutAmount.textContent = formatBRL(currentPix.amount);
   els.pixAmount.textContent = formatBRLCompact(currentPix.amount);
@@ -315,7 +281,6 @@ function startPolling() {
     return;
   }
 
-  // Consulta imediatamente e depois a cada 3 segundos.
   checkPixStatusOnce();
   pollingTimer = setInterval(checkPixStatusOnce, CONFIG.pollingEveryMs);
 }
@@ -460,9 +425,7 @@ function captureUtmOnFirstAccess() {
     };
 
     const hasAnyValue = Object.values(utm).some(Boolean);
-    if (hasAnyValue) {
-      localStorage.setItem(CONFIG.utmStorageKey, JSON.stringify(utm));
-    }
+    if (hasAnyValue) localStorage.setItem(CONFIG.utmStorageKey, JSON.stringify(utm));
   } catch (error) {
     console.warn("Não foi possível salvar UTMs", error);
   }
@@ -489,36 +452,6 @@ function maskPhone(value) {
   if (digits.length <= 6) return digits.replace(/^(\d{2})(\d+)/, "($1) $2");
   if (digits.length <= 10) return digits.replace(/^(\d{2})(\d{4})(\d+)/, "($1) $2-$3");
   return digits.replace(/^(\d{2})(\d{5})(\d+)/, "($1) $2-$3");
-}
-
-function maskCpf(value) {
-  const digits = onlyDigits(value).slice(0, 11);
-  return digits
-    .replace(/^(\d{3})(\d)/, "$1.$2")
-    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
-    .replace(/\.(\d{3})(\d)/, ".$1-$2");
-}
-
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
-}
-
-function isValidCpf(cpf) {
-  cpf = onlyDigits(cpf);
-  if (cpf.length !== 11) return false;
-  if (/^(\d)\1{10}$/.test(cpf)) return false;
-
-  let sum = 0;
-  for (let i = 0; i < 9; i++) sum += Number(cpf[i]) * (10 - i);
-  let digit1 = 11 - (sum % 11);
-  if (digit1 >= 10) digit1 = 0;
-  if (digit1 !== Number(cpf[9])) return false;
-
-  sum = 0;
-  for (let i = 0; i < 10; i++) sum += Number(cpf[i]) * (11 - i);
-  let digit2 = 11 - (sum % 11);
-  if (digit2 >= 10) digit2 = 0;
-  return digit2 === Number(cpf[10]);
 }
 
 function onlyDigits(value) {

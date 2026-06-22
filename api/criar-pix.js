@@ -3,10 +3,7 @@ const BRAVOPAY_BASE_URL = "https://bravopay.club/api/v1";
 module.exports = async function handler(req, res) {
   setCors(res);
 
-  if (req.method === "OPTIONS") {
-    return res.status(204).end();
-  }
-
+  if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Método não permitido. Use POST." });
   }
@@ -23,14 +20,10 @@ module.exports = async function handler(req, res) {
     const body = parseBody(req.body);
 
     const name = String(body.nome || body.name || body?.customer?.name || "").trim();
-    const email = String(body.email || body?.customer?.email || "").trim();
     const phone = normalizePhone(body.telefone || body.phone || body?.customer?.phone || "");
-    const cpf = onlyDigits(body.cpf || body?.customer?.cpf || "");
 
     if (name.length < 3) return res.status(400).json({ message: "Nome inválido." });
-    if (!isValidEmail(email)) return res.status(400).json({ message: "E-mail inválido." });
     if (phone.length < 12) return res.status(400).json({ message: "Telefone inválido." });
-    if (!isValidCpf(cpf)) return res.status(400).json({ message: "CPF inválido." });
 
     // Valor definido no backend para evitar alteração maliciosa no front.
     // Para trocar o valor na Vercel, use CHECKOUT_AMOUNT_CENTS=3257.
@@ -40,16 +33,34 @@ module.exports = async function handler(req, res) {
       process.env.BRAVOPAY_PRODUCT_ID || body.product_id || body.productId || ""
     );
 
+    const externalReference = cleanOptional(body.external_reference) || createExternalReference();
+
+    // IMPORTANTE:
+    // O checkout não pede e-mail nem CPF na tela.
+    // Não geramos CPF aleatório/falso. CPF é dado pessoal e deve ser enviado somente
+    // quando for fornecido pelo cliente ou quando você tiver base legal/consentimento.
+    // Se a BravoPay realmente exigir e-mail, configure BRAVOPAY_FALLBACK_EMAIL na Vercel.
+    // Ex.: BRAVOPAY_FALLBACK_EMAIL=checkout@seudominio.com
+    const fallbackEmail = cleanOptional(process.env.BRAVOPAY_FALLBACK_EMAIL || "");
+    const customerEmail = isValidEmail(body.email) ? String(body.email).trim() : fallbackEmail;
+
+    // Só envie CPF se você configurar manualmente um CPF legítimo/autorizado na Vercel.
+    // Não use CPF gerado aleatoriamente.
+    const configuredCpf = onlyDigits(process.env.BRAVOPAY_CUSTOMER_CPF || body.cpf || "");
+
+    const customer = {
+      name,
+      phone
+    };
+
+    if (customerEmail && isValidEmail(customerEmail)) customer.email = customerEmail;
+    if (configuredCpf && isValidCpf(configuredCpf)) customer.cpf = configuredCpf;
+
     const payload = {
       amount_cents: amountCents,
       method: "pix",
-      customer: {
-        name,
-        email,
-        phone,
-        cpf
-      },
-      external_reference: cleanOptional(body.external_reference) || createExternalReference(),
+      customer,
+      external_reference: externalReference,
       utm: normalizeUtm(body.utm || {})
     };
 
