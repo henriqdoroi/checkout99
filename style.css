@@ -9,15 +9,7 @@
 @font-face {
   font-family: "DiDi Sans Pro";
   src: url("./fonts/DiDiSans-Pro-Bold.b5e214b1.woff2") format("woff2");
-  font-weight: 700 900;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "DiDi Sans Flex";
-  src: url("./fonts/DiDiSansFlexBRVF-s.p.09074a25.woff2") format("woff2");
-  font-weight: 300 900;
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -41,9 +33,12 @@
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-synthesis-weight: none; }
 body {
-  font-family: "DiDi Sans Flex", "DiDi Sans Pro", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Arial, sans-serif;
+  font-family: "DiDi Sans Pro", Arial, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100dvh;
 }
 button, input { font: inherit; }
@@ -83,7 +78,7 @@ svg { display: block; }
 .topbar__title {
   margin: 0;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.2px;
 }
 
@@ -145,8 +140,8 @@ svg { display: block; }
 }
 .banner-card__brand span {
   font-size: 32px;
-  font-weight: 900;
-  letter-spacing: -1.4px;
+  font-weight: 700;
+  letter-spacing: -0.9px;
   margin-right: 4px;
 }
 .banner-card__fallback p {
@@ -170,7 +165,7 @@ svg { display: block; }
   margin: 0 0 10px;
   font-size: 23px;
   line-height: 1.14;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.65px;
   max-width: 280px;
 }
@@ -224,15 +219,17 @@ svg { display: block; }
   outline: none;
   color: var(--text);
   font-size: 17px;
+  font-weight: 400;
   letter-spacing: -0.2px;
   padding: 0;
 }
-.field input::placeholder { color: var(--muted-2); }
+.field input::placeholder { color: var(--muted-2); font-weight: 400; }
 .field--phone { align-items: flex-start; }
 .field__body { flex: 1; min-width: 0; }
 .field__label {
   display: block;
   font-size: 12px;
+  font-weight: 400;
   color: var(--muted);
   margin-bottom: 8px;
   letter-spacing: -0.1px;
@@ -249,6 +246,7 @@ svg { display: block; }
   color: var(--text);
   padding: 0;
   font-size: 16px;
+  font-weight: 500;
   letter-spacing: -0.15px;
 }
 .country span {
@@ -302,6 +300,7 @@ svg { display: block; }
 .pix-method__copy small {
   display: block;
   font-size: 13px;
+  font-weight: 400;
   color: var(--muted);
 }
 .pix-method__check {
@@ -327,7 +326,7 @@ svg { display: block; }
   border-radius: 999px;
   font-size: 17px;
   line-height: 1;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0;
   transition: transform .15s ease, opacity .2s ease, box-shadow .2s ease, background .2s ease;
 }
@@ -351,6 +350,7 @@ svg { display: block; }
   font-size: 12px;
   line-height: 1.58;
   color: #6f6f77;
+  font-weight: 400;
 }
 
 /* PIX SCREEN */
@@ -375,7 +375,7 @@ svg { display: block; }
   display: block;
   font-size: 32px;
   line-height: 1;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.9px;
 }
 
@@ -608,7 +608,7 @@ svg { display: block; }
   text-align: center;
   font-size: 18px;
   line-height: 1.2;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.4px;
 }
 .sheet p {
