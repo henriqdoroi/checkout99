@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout Pix</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    body {
+      background: #fff;
+      color: #080808;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 430px;
+      min-height: 100vh;
+      margin: 0 auto;
+      background: #fff;
+      padding: 18px 24px 32px;
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 34px;
+    }
+
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+    }
+
+    .battery {
+      width: 28px;
+      height: 14px;
+      border-radius: 4px;
+      background: #111;
+      position: relative;
+    }
+
+    .battery::after {
+      content: "";
+      position: absolute;
+      right: -4px;
+      top: 4px;
+      width: 3px;
+      height: 6px;
+      border-radius: 2px;
+      background: #111;
+    }
+
+    .topbar {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 58px;
+    }
+
+    .back {
+      position: absolute;
+      left: 0;
+      font-size: 36px;
+      line-height: 1;
+      font-weight: 500;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .topbar h1 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+    }
+
+    .hero {
+      margin-bottom: 34px;
+    }
+
+    .hero h2 {
+      font-size: 34px;
+      line-height: 1.08;
+      font-weight: 900;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+    }
+
+    .hero p {
+      font-size: 18px;
+      line-height: 1.35;
+      color: #222;
+      max-width: 360px;
+    }
+
+    .summary {
+      border-top: 1px solid #eeeeee;
+      border-bottom: 1px solid #eeeeee;
+      padding: 24px 0;
+      margin-bottom: 34px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .summary-row:first-child {
+      padding-bottom: 20px;
+    }
+
+    .summary-row + .summary-row {
+      padding-top: 20px;
+      border-top: 1px solid #eeeeee;
+    }
+
+    .product-name {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .qty {
+      font-size: 16px;
+      color: #777;
+    }
+
+    .total-label {
+      font-size: 20px;
+      color: #9b9b9b;
+      font-weight: 500;
+    }
+
+    .total-value {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.4px;
+    }
+
+    .section {
+      margin-bottom: 34px;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      margin-bottom: 18px;
+    }
+
+    .field-group {
+      margin-bottom: 22px;
+    }
+
+    .label {
+      display: block;
+      font-size: 14px;
+      color: #777;
+      margin-bottom: 9px;
+      font-weight: 500;
+    }
+
+    .input {
+      width: 100%;
+      height: 62px;
+      border: none;
+      border-bottom: 1px solid #eeeeee;
+      font-size: 22px;
+      outline: none;
+      color: #111;
+      background: transparent;
+      padding: 0;
+    }
+
+    .input::placeholder {
+      color: #b9b9c2;
+      font-weight: 500;
+    }
+
+    .phone-box {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #eeeeee;
+      height: 62px;
+    }
+
+    .country {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 95px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #111;
+    }
+
+    .phone-box input {
+      flex: 1;
+      height: 62px;
+      border: none;
+      outline: none;
+      font-size: 22px;
+      color: #111;
+      background: transparent;
+    }
+
+    .phone-box input::placeholder {
+      color: #b9b9c2;
+      font-weight: 500;
+    }
+
+    .payment-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 22px 0;
+      border-top: 1px solid #eeeeee;
+      border-bottom: 1px solid #eeeeee;
+    }
+
+    .payment-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .pix-icon {
+      width: 36px;
+      height: 36px;
+      position: relative;
+      transform: rotate(45deg);
+    }
+
+    .pix-icon span {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: #777;
+      border-radius: 4px;
+    }
+
+    .pix-icon span:nth-child(1) {
+      left: 0;
+      top: 11px;
+    }
+
+    .pix-icon span:nth-child(2) {
+      left: 11px;
+      top: 0;
+    }
+
+    .pix-icon span:nth-child(3) {
+      right: 0;
+      top: 11px;
+    }
+
+    .pix-icon span:nth-child(4) {
+      left: 11px;
+      bottom: 0;
+    }
+
+    .payment-text strong {
+      display: block;
+      font-size: 20px;
+      font-weight: 850;
+      margin-bottom: 4px;
+    }
+
+    .payment-text small {
+      display: block;
+      font-size: 15px;
+      color: #777;
+    }
+
+    .check {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #111;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .btn {
+      width: 100%;
+      height: 70px;
+      border: none;
+      border-radius: 999px;
+      background: #111;
+      color: #fff;
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: 0.6px;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: 0.2s ease;
+    }
+
+    .btn:disabled {
+      background: #eeeeef;
+      color: #c9c9cf;
+      cursor: not-allowed;
+    }
+
+    .terms {
+      text-align: center;
+      max-width: 330px;
+      margin: 18px auto 0;
+      font-size: 12px;
+      color: #777;
+      line-height: 1.45;
+    }
+
+    .pix-result {
+      display: none;
+      margin-top: 28px;
+      padding: 22px 0;
+      border-top: 1px solid #eeeeee;
+    }
+
+    .pix-result h3 {
+      font-size: 24px;
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
+
+    .pix-result p {
+      font-size: 15px;
+      color: #777;
+      line-height: 1.4;
+      margin-bottom: 14px;
+    }
+
+    .pix-code {
+      width: 100%;
+      min-height: 95px;
+      border: 1px solid #eeeeee;
+      border-radius: 18px;
+      padding: 14px;
+      font-size: 13px;
+      color: #333;
+      resize: none;
+      outline: none;
+    }
+
+    .copy-btn {
+      width: 100%;
+      height: 56px;
+      border: none;
+      border-radius: 999px;
+      background: #f1f1f2;
+      color: #111;
+      font-size: 15px;
+      font-weight: 850;
+      margin-top: 12px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 380px) {
+      .app {
+        padding: 16px 20px 30px;
+      }
+
+      .hero h2 {
+        font-size: 31px;
+      }
+
+      .product-name,
+      .total-value {
+        font-size: 21px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <div class="status-bar">
+      <div>14:53</div>
+      <div class="status-icons">
+        <span>••••</span>
+        <span>⌁</span>
+        <div class="battery"></div>
+      </div>
+    </div>
+
+    <header class="topbar">
+      <button class="back" type="button">‹</button>
+      <h1>Checkout Pix</h1>
+    </header>
+
+    <section class="hero">
+      <h2>Revise seu pagamento</h2>
+      <p>Preencha seus dados para gerar o Pix</p>
+    </section>
+
+    <section class="summary">
+      <div class="summary-row">
+        <strong class="product-name">Taxa de Segurança</strong>
+        <span class="qty">1x</span>
+      </div>
+
+      <div class="summary-row">
+        <span class="total-label">Total</span>
+        <strong class="total-value">R$ 32,57</strong>
+      </div>
+    </section>
+
+    <form id="checkoutForm">
+      <section class="section">
+        <h2 class="section-title">Identificação</h2>
+
+        <div class="field-group">
+          <label class="label" for="name">Nome Completo</label>
+          <input
+            class="input"
+            id="name"
+            name="name"
+            type="text"
+            placeholder="Nome e Sobrenome"
+            required
+          />
+        </div>
+
+        <div class="field-group">
+          <label class="label" for="phone">Telefone / WhatsApp</label>
+
+          <div class="phone-box">
+            <div class="country">BR +55⌄</div>
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              placeholder="(11) 99999-9999"
+              required
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">Pagamento</h2>
+
+        <div class="payment-option">
+          <div class="payment-left">
+            <div class="pix-icon">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+
+            <div class="payment-text">
+              <strong>Pagamento via Pix</strong>
+              <small>Aprovação imediata.</small>
+            </div>
+          </div>
+
+          <div class="check">✓</div>
+        </div>
+      </section>
+
+      <button class="btn" id="generatePix" type="submit">
+        GERAR PIX
+      </button>
+
+      <p class="terms">
+        Ao finalizar o pagamento você concorda com nossos termos de uso e política de privacidade.
+      </p>
+    </form>
+
+    <section class="pix-result" id="pixResult">
+      <h3>Pix gerado</h3>
+      <p>Copie o código Pix abaixo e finalize o pagamento no seu banco.</p>
+
+      <textarea class="pix-code" id="pixCode" readonly></textarea>
+
+      <button class="copy-btn" id="copyPix" type="button">
+        COPIAR CÓDIGO PIX
+      </button>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById("checkoutForm");
+    const btn = document.getElementById("generatePix");
+    const result = document.getElementById("pixResult");
+    const pixCode = document.getElementById("pixCode");
+    const copyBtn = document.getElementById("copyPix");
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const name = document.getElementById("name").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+
+      if (!name || !phone) {
+        alert("Preencha nome e telefone.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = "GERANDO PIX...";
+
+      try {
+        const response = await fetch("/api/criar-pix", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            nome: name,
+            telefone: phone,
+            produto: "Taxa de Segurança",
+            valor: 32.57
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Erro ao gerar Pix.");
+        }
+
+        pixCode.value = data.pixCopiaECola || data.qrCodeText || "";
+        result.style.display = "block";
+        result.scrollIntoView({ behavior: "smooth" });
+
+      } catch (error) {
+        alert("Não foi possível gerar o Pix. Verifique sua API.");
+        console.error(error);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "GERAR PIX";
+      }
+    });
+
+    copyBtn.addEventListener("click", async function () {
+      if (!pixCode.value) return;
+
+      await navigator.clipboard.writeText(pixCode.value);
+      copyBtn.innerText = "CÓDIGO COPIADO";
+
+      setTimeout(() => {
+        copyBtn.innerText = "COPIAR CÓDIGO PIX";
+      }, 1800);
+    });
+  </script>
+</body>
+</html>
