@@ -25,15 +25,26 @@ module.exports = async function handler(req, res) {
     if (name.length < 3) return res.status(400).json({ message: "Nome inválido." });
     if (phone.length < 12) return res.status(400).json({ message: "Telefone inválido." });
 
-    // Valor definido no backend para evitar alteração maliciosa no front.
-    // Para trocar o valor na Vercel, use CHECKOUT_AMOUNT_CENTS=3257.
-    const amountCents = Number(process.env.CHECKOUT_AMOUNT_CENTS || "3257");
+    // Valor definido no backend por checkout_id para evitar alteração maliciosa no front.
+    // Exemplos:
+    // - checkout1.html envia checkout_id="checkout1" => R$ 19,44
+    // - checkout2.html envia checkout_id="checkout2" => R$ 29,27
+    // - checkout3.html envia checkout_id="checkout3" => R$ 32,57
+    // Você pode editar os valores em DEFAULT_CHECKOUTS ou configurar CHECKOUT_PRICE_MAP na Vercel.
+    const checkoutId = normalizeCheckoutId(body.checkout_id || body.checkoutId || "index");
+    const checkoutConfig = getCheckoutConfig(checkoutId);
+    const amountCents = checkoutConfig.amount_cents;
 
     const productId = cleanOptional(
-      process.env.BRAVOPAY_PRODUCT_ID || body.product_id || body.productId || ""
+      checkoutConfig.product_id ||
+      process.env[`BRAVOPAY_PRODUCT_ID_${checkoutId.toUpperCase()}`] ||
+      process.env.BRAVOPAY_PRODUCT_ID ||
+      body.product_id ||
+      body.productId ||
+      ""
     );
 
-    const externalReference = cleanOptional(body.external_reference) || createExternalReference();
+    const externalReference = cleanOptional(body.external_reference) || createExternalReference(checkoutId);
 
     // IMPORTANTE:
     // O checkout não pede e-mail nem CPF na tela.
@@ -139,8 +150,62 @@ function parseBody(body) {
   return body;
 }
 
-function createExternalReference() {
-  return `pedido_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+function createExternalReference(checkoutId = "checkout") {
+  return `pedido_${checkoutId}_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+}
+
+const DEFAULT_CHECKOUTS = {
+  index: { amount_cents: 3257, name: "Taxa de Segurança" },
+  checkout1: { amount_cents: 1944, name: "Taxa de Segurança" },
+  checkout2: { amount_cents: 2927, name: "Taxa de Segurança" },
+  checkout3: { amount_cents: 3257, name: "Taxa de Segurança" },
+  upsell1: { amount_cents: 4700, name: "Oferta Especial" },
+  upsell2: { amount_cents: 6700, name: "Oferta Premium" }
+};
+
+function getCheckoutConfig(checkoutId) {
+  const customMap = parseCheckoutPriceMap(process.env.CHECKOUT_PRICE_MAP || "");
+  const map = { ...DEFAULT_CHECKOUTS, ...customMap };
+  return map[checkoutId] || map.index;
+}
+
+function parseCheckoutPriceMap(raw) {
+  if (!raw) return {};
+
+  try {
+    const parsed = JSON.parse(raw);
+    const normalized = {};
+
+    for (const [key, value] of Object.entries(parsed || {})) {
+      const checkoutId = normalizeCheckoutId(key);
+
+      if (typeof value === "number") {
+        normalized[checkoutId] = { amount_cents: Math.round(value) };
+        continue;
+      }
+
+      if (value && typeof value === "object") {
+        const amountCents = Number(value.amount_cents || value.amountCents || 0);
+        if (amountCents > 0) {
+          normalized[checkoutId] = {
+            amount_cents: Math.round(amountCents),
+            name: cleanOptional(value.name || value.productName || value.product_name || ""),
+            product_id: cleanOptional(value.product_id || value.productId || "")
+          };
+        }
+      }
+    }
+
+    return normalized;
+  } catch (error) {
+    console.warn("CHECKOUT_PRICE_MAP inválido. Usando mapa padrão.", error);
+    return {};
+  }
+}
+
+function normalizeCheckoutId(value) {
+  const id = String(value || "index").toLowerCase().replace(/\.html$/i, "").replace(/[^a-z0-9_-]/g, "");
+  return id || "index";
 }
 
 function cleanOptional(value) {

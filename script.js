@@ -1,14 +1,64 @@
+const CHECKOUTS = {
+  // Página principal / index.html. Deixei como o valor que você já estava usando.
+  index: {
+    amount: 32.57,
+    productName: "Taxa de Segurança",
+    productId: "", // opcional: cole o product_id real da BravoPay/UTMify deste checkout
+    upsellUrl: "/upsell"
+  },
+
+  // checkout1.html => R$ 19,44
+  checkout1: {
+    amount: 19.44,
+    productName: "Taxa de Segurança",
+    productId: "",
+    upsellUrl: "/checkout2.html"
+  },
+
+  // checkout2.html => R$ 29,27
+  checkout2: {
+    amount: 29.27,
+    productName: "Taxa de Segurança",
+    productId: "",
+    upsellUrl: "/checkout3.html"
+  },
+
+  // checkout3.html => R$ 32,57
+  checkout3: {
+    amount: 32.57,
+    productName: "Taxa de Segurança",
+    productId: "",
+    upsellUrl: "/upsell"
+  },
+
+  // Exemplos para seus upsells. Edite os valores e URLs quando quiser.
+  upsell1: {
+    amount: 47.00,
+    productName: "Oferta Especial",
+    productId: "",
+    upsellUrl: "/upsell2"
+  },
+
+  upsell2: {
+    amount: 67.00,
+    productName: "Oferta Premium",
+    productId: "",
+    upsellUrl: "/obrigado"
+  }
+};
+
+const ACTIVE_CHECKOUT_ID = getActiveCheckoutId();
+const ACTIVE_CHECKOUT = CHECKOUTS[ACTIVE_CHECKOUT_ID] || CHECKOUTS.index;
+
 const CONFIG = {
   // Produção: deixar false para usar as rotas /api/criar-pix e /api/pix-status.
   // Teste visual local: pode colocar true.
   useMockApi: false,
 
-  amount: 32.57,
-  productName: "Taxa de Segurança",
-
-  // Se você usa UTMify, cole aqui o product_id real do produto BravoPay.
-  // Também dá para configurar no Vercel como BRAVOPAY_PRODUCT_ID.
-  productId: "",
+  checkoutId: ACTIVE_CHECKOUT_ID,
+  amount: ACTIVE_CHECKOUT.amount,
+  productName: ACTIVE_CHECKOUT.productName,
+  productId: ACTIVE_CHECKOUT.productId || "",
 
   createPixEndpoint: "/api/criar-pix",
   statusEndpoint: "/api/pix-status",
@@ -17,7 +67,7 @@ const CONFIG = {
   pollingEveryMs: 3000,
 
   // Redirecionamento imediato após status PAID.
-  upsellUrl: "/upsell",
+  upsellUrl: ACTIVE_CHECKOUT.upsellUrl || "/upsell",
 
   mockApproveAfterSeconds: 0,
   utmStorageKey: "checkout_first_utm_bravo"
@@ -111,6 +161,18 @@ function init() {
   }
 }
 
+function getActiveCheckoutId() {
+  const params = new URLSearchParams(window.location.search);
+  const fromQuery = String(params.get("checkout") || params.get("c") || "").trim().toLowerCase();
+  if (CHECKOUTS[fromQuery]) return fromQuery;
+
+  const file = window.location.pathname.split("/").pop().replace(".html", "").toLowerCase();
+  if (!file || file === "/" || file === "index") return "index";
+  if (CHECKOUTS[file]) return file;
+
+  return "index";
+}
+
 function toggleBannerFallback() {
   if (!els.bannerImage || !els.bannerFallback) return;
   const loaded = !!els.bannerImage.complete && els.bannerImage.naturalWidth > 0;
@@ -168,6 +230,7 @@ function buildPayload() {
   }
 
   return {
+    checkout_id: CONFIG.checkoutId,
     nome,
     telefone,
     produto: CONFIG.productName,
@@ -197,7 +260,9 @@ async function createPixMock(payload) {
     sucesso: true,
     id: "mock_tx_" + Date.now(),
     status: "PENDING",
+    checkout_id: payload.checkout_id,
     valor: payload.valor,
+    amount_cents: Math.round(Number(payload.valor) * 100),
     expiresIn: 592,
     pixCopiaECola: "00020101021226900014br.gov.bcb.pix2571pix.exemplo.com/qr/v2/cob/f49d8c9b6de2450e9f78185204000053039865802BR5924PAGAMENTO SEGURO6009SAO PAULO62070503***6304A1B2",
     qrCodeText: "00020101021226900014br.gov.bcb.pix2571pix.exemplo.com/qr/v2/cob/f49d8c9b6de2450e9f78185204000053039865802BR5924PAGAMENTO SEGURO6009SAO PAULO62070503***6304A1B2",
@@ -442,7 +507,7 @@ function getStoredUtm() {
 }
 
 function createExternalReference() {
-  return `pedido_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+  return `pedido_${CONFIG.checkoutId}_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
 }
 
 function maskPhone(value) {
