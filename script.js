@@ -1,49 +1,126 @@
 const CHECKOUTS = {
-  // Página principal / index.html. Deixei como o valor que você já estava usando.
+  // Entrada principal. Você pode usar /index.html ou /checkout3.html para o valor padrão atual.
   index: {
     amount: 32.57,
     productName: "Taxa de Segurança",
-    productId: "", // opcional: cole o product_id real da BravoPay/UTMify deste checkout
-    upsellUrl: "/upsell"
+    productId: "",
+    upsellUrl: "/upsell1.html",
+    backRedirectUrl: "/back1.html"
   },
 
-  // checkout1.html => R$ 19,44
+  // CHECKOUTS PRINCIPAIS
   checkout1: {
     amount: 19.44,
     productName: "Taxa de Segurança",
     productId: "",
-    upsellUrl: "/checkout2.html"
+    upsellUrl: "/checkout2.html",
+    backRedirectUrl: "/back1.html"
   },
 
-  // checkout2.html => R$ 29,27
   checkout2: {
     amount: 29.27,
     productName: "Taxa de Segurança",
     productId: "",
-    upsellUrl: "/checkout3.html"
+    upsellUrl: "/checkout3.html",
+    backRedirectUrl: "/back2.html"
   },
 
-  // checkout3.html => R$ 32,57
   checkout3: {
     amount: 32.57,
     productName: "Taxa de Segurança",
     productId: "",
-    upsellUrl: "/upsell"
+    upsellUrl: "/upsell1.html",
+    backRedirectUrl: "/back3.html"
   },
 
-  // Exemplos para seus upsells. Edite os valores e URLs quando quiser.
+  // 6 UPSELLS
   upsell1: {
     amount: 47.00,
-    productName: "Oferta Especial",
+    productName: "Oferta Especial 1",
     productId: "",
-    upsellUrl: "/upsell2"
+    upsellUrl: "/upsell2.html",
+    backRedirectUrl: "/back4.html"
   },
 
   upsell2: {
     amount: 67.00,
-    productName: "Oferta Premium",
+    productName: "Oferta Especial 2",
     productId: "",
-    upsellUrl: "/obrigado"
+    upsellUrl: "/upsell3.html",
+    backRedirectUrl: "/back5.html"
+  },
+
+  upsell3: {
+    amount: 97.00,
+    productName: "Oferta Especial 3",
+    productId: "",
+    upsellUrl: "/upsell4.html",
+    backRedirectUrl: ""
+  },
+
+  upsell4: {
+    amount: 127.00,
+    productName: "Oferta Especial 4",
+    productId: "",
+    upsellUrl: "/upsell5.html",
+    backRedirectUrl: ""
+  },
+
+  upsell5: {
+    amount: 147.00,
+    productName: "Oferta Especial 5",
+    productId: "",
+    upsellUrl: "/upsell6.html",
+    backRedirectUrl: ""
+  },
+
+  upsell6: {
+    amount: 197.00,
+    productName: "Oferta Especial 6",
+    productId: "",
+    upsellUrl: "/obrigado.html",
+    backRedirectUrl: ""
+  },
+
+  // 5 BACK REDIRECTS / DOWNSELLS
+  back1: {
+    amount: 14.90,
+    productName: "Oferta Recuperação 1",
+    productId: "",
+    upsellUrl: "/checkout2.html",
+    backRedirectUrl: ""
+  },
+
+  back2: {
+    amount: 19.90,
+    productName: "Oferta Recuperação 2",
+    productId: "",
+    upsellUrl: "/checkout3.html",
+    backRedirectUrl: ""
+  },
+
+  back3: {
+    amount: 27.00,
+    productName: "Oferta Recuperação 3",
+    productId: "",
+    upsellUrl: "/upsell1.html",
+    backRedirectUrl: ""
+  },
+
+  back4: {
+    amount: 37.00,
+    productName: "Oferta Recuperação 4",
+    productId: "",
+    upsellUrl: "/upsell2.html",
+    backRedirectUrl: ""
+  },
+
+  back5: {
+    amount: 47.00,
+    productName: "Oferta Recuperação 5",
+    productId: "",
+    upsellUrl: "/obrigado.html",
+    backRedirectUrl: ""
   }
 };
 
@@ -67,7 +144,10 @@ const CONFIG = {
   pollingEveryMs: 3000,
 
   // Redirecionamento imediato após status PAID.
-  upsellUrl: ACTIVE_CHECKOUT.upsellUrl || "/upsell",
+  upsellUrl: ACTIVE_CHECKOUT.upsellUrl || "/upsell1.html",
+
+  // Back redirect: quando o usuário tentar voltar, manda para esta página.
+  backRedirectUrl: ACTIVE_CHECKOUT.backRedirectUrl || "",
 
   mockApproveAfterSeconds: 0,
   utmStorageKey: "checkout_first_utm_bravo"
@@ -127,6 +207,7 @@ init();
 
 function init() {
   captureUtmOnFirstAccess();
+  setupBackRedirect();
 
   els.productName.textContent = CONFIG.productName;
   els.checkoutAmount.textContent = formatBRL(CONFIG.amount);
@@ -171,6 +252,34 @@ function getActiveCheckoutId() {
   if (CHECKOUTS[file]) return file;
 
   return "index";
+}
+
+
+function setupBackRedirect() {
+  const redirectUrl = String(CONFIG.backRedirectUrl || "").trim();
+  const checkoutBackButton = document.querySelector("#checkoutScreen .topbar .icon-btn");
+
+  if (checkoutBackButton) {
+    checkoutBackButton.addEventListener("click", () => {
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      } else {
+        window.history.back();
+      }
+    });
+  }
+
+  if (!redirectUrl) return;
+
+  // Captura o botão voltar do navegador/celular e envia para o back redirect configurado.
+  try {
+    window.history.pushState({ checkoutBackRedirect: true }, "", window.location.href);
+    window.addEventListener("popstate", () => {
+      window.location.href = redirectUrl;
+    });
+  } catch (error) {
+    console.warn("Back redirect não pôde ser inicializado", error);
+  }
 }
 
 function toggleBannerFallback() {

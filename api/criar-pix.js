@@ -156,11 +156,23 @@ function createExternalReference(checkoutId = "checkout") {
 
 const DEFAULT_CHECKOUTS = {
   index: { amount_cents: 3257, name: "Taxa de Segurança" },
+
   checkout1: { amount_cents: 1944, name: "Taxa de Segurança" },
   checkout2: { amount_cents: 2927, name: "Taxa de Segurança" },
   checkout3: { amount_cents: 3257, name: "Taxa de Segurança" },
-  upsell1: { amount_cents: 4700, name: "Oferta Especial" },
-  upsell2: { amount_cents: 6700, name: "Oferta Premium" }
+
+  upsell1: { amount_cents: 4700, name: "Oferta Especial 1" },
+  upsell2: { amount_cents: 6700, name: "Oferta Especial 2" },
+  upsell3: { amount_cents: 9700, name: "Oferta Especial 3" },
+  upsell4: { amount_cents: 12700, name: "Oferta Especial 4" },
+  upsell5: { amount_cents: 14700, name: "Oferta Especial 5" },
+  upsell6: { amount_cents: 19700, name: "Oferta Especial 6" },
+
+  back1: { amount_cents: 1490, name: "Oferta Recuperação 1" },
+  back2: { amount_cents: 1990, name: "Oferta Recuperação 2" },
+  back3: { amount_cents: 2700, name: "Oferta Recuperação 3" },
+  back4: { amount_cents: 3700, name: "Oferta Recuperação 4" },
+  back5: { amount_cents: 4700, name: "Oferta Recuperação 5" }
 };
 
 function getCheckoutConfig(checkoutId) {
